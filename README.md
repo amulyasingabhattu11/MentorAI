@@ -23,7 +23,7 @@ behaves identically to the original.
 ## Project structure
 
 ```
-mentorai-js/
+MentorAI/
 ├── backend/
 │   ├── app.js              # Express app setup (mirrors app.py)
 │   ├── db.js                # JSON-file persistence (mirrors models.py)
@@ -43,18 +43,28 @@ mentorai-js/
     ├── auth.js                 # localStorage-backed session (mirrors AuthContext.jsx)
     └── app.js                  # hash router + page renderers (mirrors App.jsx + pages/*.jsx)
 ```
+## Prerequisites
+
+- Node.js 18+
+- npm
+- Python 3 (only to serve the frontend)
+- A Groq API key
 
 ## Running it
+Open two terminals.
 
+### Terminal 1 (Backend)
 ### Backend
 ```bash
 cd backend
 npm install
-cp .env.example .env       # then fill in GROQ_API_KEY
+
+# Create a .env file from .env.example and add your GROQ_API_KEY
 npm start
 ```
 Backend runs on `http://localhost:5000`.
 
+### Terminal 2 (Frontend)
 ### Frontend
 No build step, no npm install needed. Just serve the folder statically, e.g.:
 ```bash
@@ -67,9 +77,7 @@ python -m http.server 8080
 python3 -m http.server 8080
 ```
 
-Open:
 
-http://127.0.0.1:8080
 Then open `http://localhost:8080`. If your backend runs somewhere other than
 `http://localhost:5000`, set it before `app.js` loads:
 ```html
