@@ -59,8 +59,17 @@ Backend runs on `http://localhost:5000`.
 No build step, no npm install needed. Just serve the folder statically, e.g.:
 ```bash
 cd frontend
+
+# Windows
+python -m http.server 8080
+
+# macOS/Linux
 python3 -m http.server 8080
 ```
+
+Open:
+
+http://127.0.0.1:8080
 Then open `http://localhost:8080`. If your backend runs somewhere other than
 `http://localhost:5000`, set it before `app.js` loads:
 ```html
