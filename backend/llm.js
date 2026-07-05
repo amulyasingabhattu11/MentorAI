@@ -45,7 +45,7 @@ const ROADMAP_SYSTEM_PROMPT =
   "Keep each stage short (3-6 words), ordered chronologically from where a beginner would " +
   "start through to achieving the goal, 4-6 stages total.";
 
-async function callGroq(systemPrompt, userContent) {
+async function callGroqMessages(messages) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error("GROQ_API_KEY is not set");
@@ -59,10 +59,7 @@ async function callGroq(systemPrompt, userContent) {
     },
     body: JSON.stringify({
       model: GROQ_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
+      messages,
       temperature: 0.4,
       response_format: { type: "json_object" },
     }),
@@ -78,11 +75,31 @@ async function callGroq(systemPrompt, userContent) {
   return JSON.parse(raw);
 }
 
-async function askMentor(mode, question) {
+async function callGroq(systemPrompt, userContent) {
+  return callGroqMessages([
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userContent },
+  ]);
+}
+
+// history is an array of prior turns in this conversation: [{ question, summary, steps, resources }, ...]
+// so a "reply" gets the whole thread as context, not just the latest message.
+async function askMentor(mode, question, history = []) {
   const systemPrompt = MODE_PROMPTS[mode] || MODE_PROMPTS.career;
+
+  const messages = [{ role: "system", content: systemPrompt }];
+  for (const turn of history) {
+    messages.push({ role: "user", content: turn.question });
+    messages.push({
+      role: "assistant",
+      content: JSON.stringify({ summary: turn.summary, steps: turn.steps, resources: turn.resources }),
+    });
+  }
+  messages.push({ role: "user", content: question });
+
   let result;
   try {
-    result = await callGroq(systemPrompt, question);
+    result = await callGroqMessages(messages);
   } catch (e) {
     // Fail soft so the demo never shows a raw 500 — still useful for grading
     result = {

@@ -5,53 +5,114 @@
       "name": "ams",
       "email": "st@gmail.com",
       "password_hash": "$2a$10$GfAGJV4t0tHvzgfjVehiJuQmpIgvnsplCHxw4mEGyPrwtDqLUGCzW",
-      "goal": "I want to become ML Research intern",
-      "career_roadmap": "",
+      "goal": "I want to crack Groups(like UPSC) by next notification",
+      "career_roadmap": "Preliminary exam preparation -> Mains exam focused study -> Interview skills development -> Mock tests and practice -> Revision and consistency -> Final assessment and attempt",
       "created_at": "2026-07-05T08:37:33.935Z"
     }
   ],
   "mentorSessions": [
     {
-      "id": 1,
+      "id": 4,
       "user_id": 1,
       "mode": "career",
-      "question": "I wnat to become ML Research intern",
-      "summary": "To become an ML research intern, focus on building a strong foundation in machine learning and gaining practical experience through projects and research papers. This will help you develop the skills and knowledge required for a research internship in machine learning.",
+      "question": "top careers in 2026?",
+      "summary": "The top careers in 2026 include roles in artificial intelligence, cybersecurity, and data science, with high demand and competitive salaries. These careers require strong technical skills and adaptability in a rapidly changing job market.",
       "steps": [
-        "Take online courses in machine learning and deep learning to build a strong foundation",
-        "Read and implement research papers in machine learning to gain practical experience",
-        "Participate in machine learning competitions to develop problem-solving skills"
+        "Research job market trends and required skills for in-demand careers",
+        "Update your resume and online profiles to highlight relevant technical skills",
+        "Pursue certifications or courses in emerging technologies like AI and machine learning"
       ],
       "resources": [
-        "Deep Learning",
-        "Machine Learning with Python",
-        "Natural Language Processing"
+        "Artificial Intelligence",
+        "Cybersecurity",
+        "Data Science"
       ],
-      "created_at": "2026-07-05T08:44:48.090Z"
+      "created_at": "2026-07-05T09:08:06.336Z",
+      "conversation_id": 4
     },
     {
-      "id": 2,
+      "id": 5,
       "user_id": 1,
       "mode": "career",
-      "question": "I want to become ML Research intern",
-      "summary": "To become an ML Research intern, focus on building a strong foundation in machine learning and gaining practical experience through projects and internships. This will help you develop the skills and knowledge required for a research internship in machine learning.",
+      "question": "I want to crack Groups by next notification",
+      "summary": "To crack Google Groups by the next notification, focus on building a strong foundation in data structures, algorithms, and system design, and practice solving problems on platforms like LeetCode and Pramp.",
       "steps": [
-        "Take online courses in machine learning and deep learning to build a strong theoretical foundation",
-        "Work on personal projects that apply machine learning to real-world problems",
-        "Participate in machine learning competitions to practice and learn from others"
+        "Create a study plan with a timeline, focusing on key areas such as system design, object-oriented design, and data structures",
+        "Practice whiteboarding exercises to improve problem-solving skills and communication",
+        "Review and practice common interview questions, and participate in mock interviews to improve performance"
       ],
       "resources": [
-        "Deep Learning",
-        "Machine Learning with Python",
-        "Natural Language Processing"
+        "System Design",
+        "Data Structures and Algorithms",
+        "Object-Oriented Design"
       ],
-      "created_at": "2026-07-05T08:57:58.620Z"
+      "created_at": "2026-07-05T09:10:06.807Z",
+      "conversation_id": 5
+    },
+    {
+      "id": 6,
+      "user_id": 1,
+      "mode": "career",
+      "question": "I want to crack Groups(like UPSC) by next notification",
+      "summary": "To crack groups like UPSC, a well-planned strategy and consistent effort are required, focusing on understanding the syllabus, practicing with mock tests, and staying updated with current affairs.",
+      "steps": [
+        "Create a study plan with a timeline, setting specific goals for each subject and topic",
+        "Focus on building a strong foundation in core subjects like history, geography, and politics",
+        "Practice with mock tests and previous years' question papers to improve time management and question-solving skills"
+      ],
+      "resources": [
+        "UPSC syllabus",
+        "Current affairs",
+        "Mock test series"
+      ],
+      "created_at": "2026-07-05T09:10:34.398Z",
+      "conversation_id": 6
+    },
+    {
+      "id": 7,
+      "conversation_id": 7,
+      "user_id": 1,
+      "mode": "career",
+      "question": "hi",
+      "summary": "To get started with your CS career, it's essential to identify your interests and strengths within the field. You can begin by exploring different areas of computer science and setting career goals.",
+      "steps": [
+        "Research different areas of computer science, such as artificial intelligence, data science, or cybersecurity",
+        "Reflect on your strengths and interests to narrow down potential career paths",
+        "Create a list of short-term and long-term career goals"
+      ],
+      "resources": [
+        "Computer Science Specializations",
+        "Career Development Strategies",
+        "Professional Networking"
+      ],
+      "created_at": "2026-07-05T09:51:01.438Z"
     }
   ],
-  "resumeReviews": [],
+  "resumeReviews": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "target_role": "",
+      "score": 85,
+      "missing_skills": [
+        "Cloud Computing",
+        "Cybersecurity",
+        "DevOps"
+      ],
+      "suggestions": [
+        "Quantify the impact of projects by including metrics such as user acquisition, revenue growth, or performance improvements",
+        "Emphasize transferable skills from certifications and workshops, such as MLOps, to demonstrate expertise",
+        "Consider adding relevant internships or co-op experiences to demonstrate practical application of skills",
+        "Use action verbs consistently throughout the resume to describe achievements and responsibilities",
+        "Include relevant tools and technologies from the industry, such as containerization using Docker, to enhance the technical skill set",
+        "Use a standard format for listing projects, including a brief description, technologies used, and accomplishments"
+      ],
+      "created_at": "2026-07-05T09:14:14.548Z"
+    }
+  ],
   "nextId": {
     "users": 2,
-    "mentorSessions": 3,
-    "resumeReviews": 1
+    "mentorSessions": 8,
+    "resumeReviews": 2
   }
 }

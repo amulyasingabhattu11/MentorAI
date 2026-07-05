@@ -179,11 +179,45 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   margin-bottom: 4px;
 }
 
+/* ---- history list: one card per conversation, delete button top-right ---- */
+
 .history-item {
+  position: relative;
   border-bottom: 1px solid #ece9df;
-  padding: 12px 0;
+  padding: 12px 36px 12px 0;
 }
 .history-item:last-child { border-bottom: none; }
+
+.history-item-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+}
+
+.history-item-link:hover {
+  background: #f7f6f2;
+}
+
+.history-delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 0;
+  background: transparent;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  color: #9a988e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-delete-btn:hover {
+  background: #fbeaea;
+  color: #a32d2d;
+}
 
 .badge {
   display: inline-block;
@@ -193,6 +227,12 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   background: #e6f1fb;
   color: #185fa5;
   margin-bottom: 4px;
+}
+
+.badge-muted {
+  background: #f1f0e8;
+  color: #6b6a63;
+  margin-left: 6px;
 }
 
 /* ---- sidebar profile snippet (just avatar + name, links to /profile) ---- */
@@ -291,4 +331,30 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .profile-value.empty {
   color: #9a988e;
   font-style: italic;
+}
+
+/* ---- chat thread (Mentor page, continuing conversation) ---- */
+
+.chat-turn {
+  margin-bottom: 20px;
+}
+
+.chat-bubble {
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.chat-bubble-user {
+  background: #e6f1fb;
+  max-width: 80%;
+}
+
+.chat-bubble-assistant {
+  background: #ffffff;
+  border: 1px solid #e4e2da;
+}
+
+#thread-messages {
+  margin-bottom: 16px;
 }

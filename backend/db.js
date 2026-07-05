@@ -31,6 +31,22 @@ function save(state) {
 
 let state = load();
 
+// ---- migration: backfill conversation_id for turns saved before threading
+// was added. Older rows in mentorai.db.json predate this field entirely, so
+// group-by-conversation would otherwise key them under `undefined`. This
+// runs once per process start and persists the fix to disk.
+function migrateMissingConversationIds() {
+  let changed = false;
+  for (const s of state.mentorSessions) {
+    if (s.conversation_id === undefined || s.conversation_id === null) {
+      s.conversation_id = s.id;
+      changed = true;
+    }
+  }
+  if (changed) save(state);
+}
+migrateMissingConversationIds();
+
 function nextId(collection) {
   const id = state.nextId[collection]++;
   save(state);
@@ -82,10 +98,15 @@ function userToDict(user) {
 }
 
 // ---- mentor sessions ----
+// Each row is a single turn. Turns that belong to the same thread share a
+// conversation_id. A brand-new conversation's root turn uses its own id as
+// the conversation_id (so no separate id sequence/table is needed).
 
-function createMentorSession({ userId, mode, question, summary, steps, resources }) {
+function createMentorSession({ userId, mode, question, summary, steps, resources, conversationId }) {
+  const id = nextId("mentorSessions");
   const session = {
-    id: nextId("mentorSessions"),
+    id,
+    conversation_id: conversationId || id,
     user_id: userId,
     mode,
     question,
@@ -99,15 +120,67 @@ function createMentorSession({ userId, mode, question, summary, steps, resources
   return session;
 }
 
+// Flat list of turns (kept for any internal/back-compat use).
 function listMentorSessions(userId, mode) {
   let rows = state.mentorSessions.filter((s) => s.user_id === userId);
   if (mode) rows = rows.filter((s) => s.mode === mode);
   return rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).slice(0, 50);
 }
+function deleteConversation(userId, conversationId) {
+  const before = state.mentorSessions.length;
+  state.mentorSessions = state.mentorSessions.filter(
+    (s) => !(s.conversation_id === conversationId && s.user_id === userId)
+  );
+  const deleted = state.mentorSessions.length < before;
+  if (deleted) save(state);
+  return deleted;
+}
+// Grouped-by-thread list for the History page: one row per conversation,
+// showing the opening question as the title and the latest reply as a preview.
+function listConversations(userId, mode) {
+  let rows = state.mentorSessions.filter((s) => s.user_id === userId);
+  if (mode) rows = rows.filter((s) => s.mode === mode);
+
+  const byConversation = new Map();
+  for (const s of rows) {
+    if (!byConversation.has(s.conversation_id)) byConversation.set(s.conversation_id, []);
+    byConversation.get(s.conversation_id).push(s);
+  }
+
+  const conversations = [];
+  for (const [conversationId, turns] of byConversation) {
+    turns.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+    const first = turns[0];
+    const last = turns[turns.length - 1];
+    conversations.push({
+      conversation_id: conversationId,
+      mode: first.mode,
+      title: first.question,
+      last_message: last.summary,
+      turn_count: turns.length,
+      created_at: first.created_at,
+      updated_at: last.created_at,
+    });
+  }
+
+  return conversations.sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)).slice(0, 50);
+}
+
+// All turns of a single thread, in chronological order. Returns null if the
+// conversation doesn't exist or doesn't belong to this user (so the route
+// can 404 instead of leaking another user's thread).
+function getConversationTurns(userId, conversationId) {
+  const rows = state.mentorSessions.filter(
+    (s) => s.conversation_id === conversationId && s.user_id === userId
+  );
+  if (rows.length === 0) return null;
+  return rows.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+}
 
 function sessionToDict(s) {
   return {
     id: s.id,
+    conversation_id: s.conversation_id,
     mode: s.mode,
     question: s.question,
     summary: s.summary,
@@ -180,6 +253,9 @@ module.exports = {
   userToDict,
   createMentorSession,
   listMentorSessions,
+  listConversations,
+  getConversationTurns,
+  deleteConversation,
   sessionToDict,
   createResumeReview,
   listResumeReviews,

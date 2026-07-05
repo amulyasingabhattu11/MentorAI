@@ -37,15 +37,34 @@ const api = {
       body: JSON.stringify({ email, password }),
     }).then(handle),
 
-  askMentor: (mode, question) =>
+  // conversationId is optional: omit it to start a new thread, pass it to
+  // reply within an existing one.
+  askMentor: (mode, question, conversationId) =>
     fetch(`${BASE_URL}/mentor/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ mode, question }),
+      body: JSON.stringify({ mode, question, conversation_id: conversationId || undefined }),
     }).then(handle),
 
+  // now returns one row per conversation: { conversation_id, mode, title,
+  // last_message, turn_count, created_at, updated_at }
   mentorHistory: (mode) =>
     fetch(`${BASE_URL}/mentor/history${mode ? `?mode=${mode}` : ""}`, {
+      headers: { ...authHeaders() },
+    }).then(handle),
+  deleteConversation: (conversationId) => {
+    const id = Number(conversationId);
+    if (!Number.isFinite(id)) {
+      return Promise.reject(new Error("Invalid conversation id"));
+    }
+    return fetch(`${BASE_URL}/mentor/conversations/${id}`, {
+      method: "DELETE",
+      headers: { ...authHeaders() },
+    }).then(handle);
+  },
+  // full ordered list of turns for one thread
+  getConversation: (conversationId) =>
+    fetch(`${BASE_URL}/mentor/conversations/${conversationId}`, {
       headers: { ...authHeaders() },
     }).then(handle),
 
@@ -81,7 +100,7 @@ const api = {
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ goal, career_roadmap: careerRoadmap }),
     }).then(handle),
-
+  
   generateRoadmap: (goal) =>
     fetch(`${BASE_URL}/mentor/roadmap`, {
       method: "POST",
