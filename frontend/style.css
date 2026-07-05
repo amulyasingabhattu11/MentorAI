@@ -1,10 +1,68 @@
+/* ==========================================================================
+   Theme variables
+   Light theme = the app's original look (unchanged).
+   Dark theme  = purple glassmorphism, applied via [data-theme="dark"] on <html>.
+   Toggled + persisted from app.js (localStorage key "mentorai_theme").
+   ========================================================================== */
+
+:root {
+  --bg: #f7f6f2;
+  --sidebar-bg: #ffffff;
+  --border: #e4e2da;
+  --text: #1a1a18;
+  --text-muted: #6b6a63;
+  --text-faint: #9a988e;
+  --card-bg: #ffffff;
+  --stat-bg: #f1f0e8;
+  --accent: #185fa5;
+  --accent-soft-bg: #e6f1fb;
+  --accent-soft-text: #185fa5;
+  --button-bg: #1a1a18;
+  --button-text: #ffffff;
+  --danger: #a32d2d;
+  --danger-bg: #fbeaea;
+  --success: #1a7f37;
+  --input-bg: #ffffff;
+  --input-border: #d8d6cb;
+  --hover-bg: #f7f6f2;
+  --badge-muted-bg: #f1f0e8;
+  --progress-fill: #185fa5;
+  --card-shadow: none;
+}
+
+[data-theme="dark"] {
+  --bg: #14101f;
+  --sidebar-bg: #191430;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f1eefc;
+  --text-muted: #a89fc4;
+  --text-faint: #726a8f;
+  --card-bg: #1e1836;
+  --stat-bg: #241d3f;
+  --accent: #8b5cf6;
+  --accent-soft-bg: rgba(139, 92, 246, 0.16);
+  --accent-soft-text: #c4b5fd;
+  --button-bg: linear-gradient(135deg, #8b5cf6, #6366f1);
+  --button-text: #ffffff;
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --success: #4ade80;
+  --input-bg: #241d3f;
+  --input-border: rgba(255, 255, 255, 0.14);
+  --hover-bg: rgba(139, 92, 246, 0.08);
+  --badge-muted-bg: #241d3f;
+  --progress-fill: linear-gradient(90deg, #8b5cf6, #6366f1);
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f7f6f2;
-  color: #1a1a18;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 a { color: inherit; }
@@ -16,8 +74,8 @@ a { color: inherit; }
 }
 
 .sidebar {
-  background: #ffffff;
-  border-right: 1px solid #e4e2da;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
@@ -38,12 +96,12 @@ a { color: inherit; }
   border-radius: 8px;
   font-size: 14px;
   text-decoration: none;
-  color: #55534c;
+  color: var(--text-muted);
 }
 
 .nav-link.active {
-  background: #e6f1fb;
-  color: #185fa5;
+  background: var(--accent-soft-bg);
+  color: var(--accent-soft-text);
 }
 
 .main {
@@ -52,11 +110,23 @@ a { color: inherit; }
 }
 
 .card {
-  background: #ffffff;
-  border: 1px solid #e4e2da;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 16px;
+  box-shadow: var(--card-shadow);
+}
+
+.card-title {
+  font-weight: 500;
+  margin: 0 0 2px;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
 }
 
 .stat-grid {
@@ -67,12 +137,12 @@ a { color: inherit; }
 }
 
 .stat-card {
-  background: #f1f0e8;
+  background: var(--stat-bg);
   border-radius: 10px;
   padding: 1rem;
 }
 
-.stat-label { font-size: 13px; color: #6b6a63; margin: 0 0 4px; }
+.stat-label { font-size: 13px; color: var(--text-muted); margin: 0 0 4px; }
 .stat-value { font-size: 24px; font-weight: 600; margin: 0; }
 
 .mode-grid {
@@ -83,33 +153,36 @@ a { color: inherit; }
 }
 
 .mode-card {
-  background: #ffffff;
-  border: 1px solid #e4e2da;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1rem;
   cursor: pointer;
   text-align: left;
+  color: var(--text);
 }
 
 .mode-card.selected {
-  border: 2px solid #185fa5;
+  border: 2px solid var(--accent);
 }
 
 .mode-title { font-weight: 600; font-size: 14px; margin: 0 0 4px; }
-.mode-desc { font-size: 13px; color: #6b6a63; margin: 0; }
+.mode-desc { font-size: 13px; color: var(--text-muted); margin: 0; }
 
 textarea, input {
   width: 100%;
-  border: 1px solid #d8d6cb;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 14px;
   font-family: inherit;
+  color: var(--text);
 }
 
 button {
-  background: #1a1a18;
-  color: #fff;
+  background: var(--button-bg);
+  color: var(--button-text);
   border: none;
   border-radius: 8px;
   padding: 8px 16px;
@@ -121,26 +194,26 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .button-secondary {
   background: transparent;
-  color: #1a1a18;
-  border: 1px solid #d8d6cb;
+  color: var(--text);
+  border: 1px solid var(--input-border);
 }
 
-.error-text { color: #a32d2d; font-size: 13px; margin-top: 8px; }
+.error-text { color: var(--danger); font-size: 13px; margin-top: 8px; }
 
 .success-text {
-  color: #1a7f37;
+  color: var(--success);
   font-size: 13px;
   margin: 0;
 }
 
 .career-actions {
-  border-top: 1px solid #ece9df;
+  border-top: 1px solid var(--border);
   margin-top: 14px;
   padding-top: 14px;
 }
 
 .career-actions a {
-  color: #185fa5;
+  color: var(--accent);
   font-weight: 500;
 }
 
@@ -151,21 +224,23 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   margin-bottom: 6px;
 }
 
-.step-num { color: #185fa5; font-weight: 600; }
+.step-num { color: var(--accent); font-weight: 600; }
 
 .auth-shell {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--bg);
 }
 
 .auth-card {
   width: 360px;
-  background: #fff;
-  border: 1px solid #e4e2da;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 2rem;
+  box-shadow: var(--card-shadow);
 }
 
 .field {
@@ -175,7 +250,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .field label {
   display: block;
   font-size: 13px;
-  color: #6b6a63;
+  color: var(--text-muted);
   margin-bottom: 4px;
 }
 
@@ -183,7 +258,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .history-item {
   position: relative;
-  border-bottom: 1px solid #ece9df;
+  border-bottom: 1px solid var(--border);
   padding: 12px 36px 12px 0;
 }
 .history-item:last-child { border-bottom: none; }
@@ -196,7 +271,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .history-item-link:hover {
-  background: #f7f6f2;
+  background: var(--hover-bg);
 }
 
 .history-delete-btn {
@@ -207,7 +282,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   border: none;
   padding: 6px;
   border-radius: 6px;
-  color: #9a988e;
+  color: var(--text-faint);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -215,8 +290,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .history-delete-btn:hover {
-  background: #fbeaea;
-  color: #a32d2d;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 .badge {
@@ -224,14 +299,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   font-size: 12px;
   padding: 2px 10px;
   border-radius: 6px;
-  background: #e6f1fb;
-  color: #185fa5;
+  background: var(--accent-soft-bg);
+  color: var(--accent-soft-text);
   margin-bottom: 4px;
 }
 
 .badge-muted {
-  background: #f1f0e8;
-  color: #6b6a63;
+  background: var(--badge-muted-bg);
+  color: var(--text-muted);
   margin-left: 6px;
 }
 
@@ -249,7 +324,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .sidebar-profile:hover,
 .sidebar-profile.active {
-  background: #e6f1fb;
+  background: var(--accent-soft-bg);
 }
 
 .sidebar-profile .profile-avatar {
@@ -268,13 +343,22 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   text-overflow: ellipsis;
 }
 
+/* ---- theme toggle (bottom of sidebar) ---- */
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 /* ---- avatar (shared by sidebar snippet + profile page) ---- */
 
 .profile-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #185fa5;
+  background: var(--accent);
   color: #fff;
   display: flex;
   align-items: center;
@@ -303,7 +387,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .profile-email-lg {
-  color: #6b6a63;
+  color: var(--text-muted);
   font-size: 14px;
   margin: 2px 0 20px;
 }
@@ -316,20 +400,20 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #9a988e;
+  color: var(--text-faint);
   margin: 0 0 4px;
 }
 
 .profile-value {
   font-size: 14px;
-  color: #3a392f;
+  color: var(--text);
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .profile-value.empty {
-  color: #9a988e;
+  color: var(--text-faint);
   font-style: italic;
 }
 
@@ -346,15 +430,226 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .chat-bubble-user {
-  background: #e6f1fb;
+  background: var(--accent-soft-bg);
   max-width: 80%;
 }
 
 .chat-bubble-assistant {
-  background: #ffffff;
-  border: 1px solid #e4e2da;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+
+.chat-bubble-assistant p {
+  color: var(--text) !important;
 }
 
 #thread-messages {
   margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   Progress page
+   ========================================================================== */
+
+.progress-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.progress-stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+.progress-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.icon-orange { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+.icon-blue   { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.icon-purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+.icon-green  { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+
+.progress-stat-value {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.progress-stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.progress-charts-grid,
+.progress-lower-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ---- study hours bar chart ---- */
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 160px;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 8px;
+}
+
+.bar-track {
+  width: 100%;
+  max-width: 28px;
+  height: 130px;
+  background: var(--stat-bg);
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.bar-fill {
+  width: 100%;
+  background: var(--progress-fill);
+  border-radius: 6px;
+  transition: height 0.3s ease;
+}
+
+.bar-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---- skills radar chart ---- */
+
+.radar-svg {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+}
+
+.radar-grid {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.radar-axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.radar-data {
+  fill: var(--accent);
+  fill-opacity: 0.35;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.radar-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+/* ---- topic progress + roadmap ---- */
+
+.topic-row {
+  margin-bottom: 14px;
+}
+.topic-row:last-child { margin-bottom: 0; }
+
+.topic-row-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background: var(--stat-bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--progress-fill);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.roadmap-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.roadmap-step:last-child { border-bottom: none; }
+
+.roadmap-step-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.roadmap-step-done .roadmap-step-icon {
+  background: var(--success);
+  color: #fff;
+}
+.roadmap-step-done span:last-child { color: var(--text-muted); }
+
+.roadmap-step-current .roadmap-step-icon {
+  background: var(--accent);
+  color: #fff;
+}
+.roadmap-step-current span:last-child { font-weight: 600; }
+
+.roadmap-step-todo .roadmap-step-icon {
+  background: var(--stat-bg);
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+}
+.roadmap-step-todo span:last-child { color: var(--text-faint); }
+
+@media (max-width: 720px) {
+  .progress-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .progress-charts-grid,
+  .progress-lower-grid { grid-template-columns: 1fr; }
 }

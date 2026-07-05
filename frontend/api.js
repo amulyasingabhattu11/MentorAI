@@ -73,6 +73,13 @@ const api = {
       headers: { ...authHeaders() },
     }).then(handle),
 
+  // powers the Progress page: streak, XP/level, study-hours chart, skills
+  // radar, topic progress, and roadmap step status
+  progressStats: () =>
+    fetch(`${BASE_URL}/dashboard/progress`, {
+      headers: { ...authHeaders() },
+    }).then(handle),
+
   analyzeResume: (file, targetRole) => {
     const form = new FormData();
     form.append("file", file);

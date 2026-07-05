@@ -245,6 +245,111 @@ function dashboardStats(userId) {
   };
 }
 
+// ---- progress page aggregates ----
+// Everything here is derived from data we already store (mentorSessions +
+// resumeReviews + the user's saved career_roadmap), so no new tables/fields
+// are needed. Values are simple, explainable proxies rather than exact
+// tracked metrics (we don't log actual time-on-task, for example).
+
+const TOPIC_KEYWORDS = [
+  { label: "Data Structures", keywords: ["data structure", "array", "linked list", "stack", "queue", "tree", "graph", "hash"] },
+  { label: "Algorithms", keywords: ["algorithm", "sorting", "search", "dynamic programming", "recursion", "complexity", "big o"] },
+  { label: "System Design", keywords: ["system design", "scalability", "microservice", "architecture", "load balancer", "distributed"] },
+  { label: "Database Design", keywords: ["database", "sql", "schema", "normalization", "index", "query", "nosql"] },
+  { label: "Web Development", keywords: ["web", "frontend", "backend", "react", "html", "css", "javascript", "api", "rest"] },
+];
+
+const SKILL_KEYWORDS = [
+  { label: "DSA", keywords: ["data structure", "algorithm", "array", "tree", "graph", "recursion"] },
+  { label: "Databases", keywords: ["database", "sql", "schema", "query", "nosql"] },
+  { label: "DevOps", keywords: ["devops", "ci/cd", "docker", "kubernetes", "deployment", "cloud"] },
+  { label: "Frontend", keywords: ["frontend", "react", "css", "html", "ui", "component"] },
+  { label: "Backend", keywords: ["backend", "api", "server", "node", "express", "endpoint"] },
+];
+
+// Counts how many of a user's sessions mention any keyword in each group.
+// Users with no matching history yet get a baseline value instead of a flat
+// zero, so a brand-new account doesn't render an empty-looking chart.
+function scoreAgainst(sessions, groups, baseline) {
+  return groups.map((g, idx) => {
+    const matches = sessions.filter((s) => {
+      const text = `${s.question} ${s.summary}`.toLowerCase();
+      return g.keywords.some((k) => text.includes(k));
+    }).length;
+    const value = matches === 0 ? baseline[idx] : Math.min(100, 25 + matches * 15);
+    return { label: g.label, value };
+  });
+}
+
+function dayKey(iso) {
+  return new Date(iso).toISOString().slice(0, 10);
+}
+
+function progressStats(userId) {
+  const sessions = state.mentorSessions.filter((s) => s.user_id === userId);
+  const reviews = state.resumeReviews.filter((r) => r.user_id === userId);
+
+  // --- day streak: consecutive days (walking back from today) with >=1 session
+  const activeDays = new Set(sessions.map((s) => dayKey(s.created_at)));
+  let streak = 0;
+  const cursor = new Date();
+  while (activeDays.has(cursor.toISOString().slice(0, 10))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  // --- last 7 days of activity, used for the study-hours bar chart
+  // (proxy: ~18 minutes of study per session/turn)
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const studyHours = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const count = sessions.filter((s) => dayKey(s.created_at) === key).length;
+    studyHours.push({ day: dayLabels[d.getDay()], hours: Math.round(count * 0.3 * 10) / 10 });
+  }
+  const hoursThisWeek = Math.round(studyHours.reduce((sum, d) => sum + d.hours, 0) * 10) / 10;
+
+  // --- XP / level: 10 XP per mentor turn, 20 XP per resume review
+  const totalXp = sessions.length * 10 + reviews.length * 20;
+  const level = Math.floor(totalXp / 100) + 1;
+
+  // --- topic + skill breakdowns, derived from keyword matches in past
+  // questions/summaries
+  const topics = scoreAgainst(sessions, TOPIC_KEYWORDS, [20, 15, 10, 15, 25]);
+  const skills = scoreAgainst(sessions, SKILL_KEYWORDS, [15, 10, 5, 20, 15]);
+
+  // --- roadmap: one step per line (or "->" segment) of the user's saved
+  // career_roadmap text, falling back to a generic default if none is set yet
+  const user = findUserById(userId);
+  const raw = (user && user.career_roadmap) || "";
+  let stepLabels = raw
+    .split(/\n|->/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (stepLabels.length === 0) {
+    stepLabels = ["Programming Basics", "Data Structures", "System Design", "Cloud Computing"];
+  }
+  const overallPercent = Math.min(100, Math.round((totalXp / 500) * 100));
+  const doneCount = Math.floor((overallPercent / 100) * stepLabels.length);
+  const steps = stepLabels.map((label, idx) => ({
+    label,
+    status: idx < doneCount ? "done" : idx === doneCount ? "current" : "todo",
+  }));
+
+  return {
+    day_streak: streak,
+    hours_this_week: hoursThisWeek,
+    total_xp: totalXp,
+    level,
+    study_hours: studyHours,
+    skills,
+    topics,
+    roadmap: { overall_percent: overallPercent, steps },
+  };
+}
+
 module.exports = {
   findUserByEmail,
   findUserById,
@@ -261,4 +366,5 @@ module.exports = {
   listResumeReviews,
   reviewToDict,
   dashboardStats,
+  progressStats,
 };

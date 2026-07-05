@@ -6,6 +6,23 @@
 // History lists conversations instead of raw turns, and the Mentor page is a real
 // chat thread with a reply box instead of a single ask-and-done form.
 
+// ---- theme (light/dark) ----
+// Applied as a data-theme attribute on <html> so style.css can key every
+// color off CSS variables. Persisted in localStorage; light is the default
+// and looks exactly like the original UI, dark is the purple glass look.
+(function initTheme() {
+  const saved = localStorage.getItem("mentorai_theme") || "light";
+  document.documentElement.setAttribute("data-theme", saved);
+})();
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const next = isDark ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("mentorai_theme", next);
+  return next;
+}
+
 const root = document.getElementById("root");
 
 function escapeHtml(str) {
@@ -16,7 +33,7 @@ function escapeHtml(str) {
 
 // ---- routing ----
 
-const ROUTES = ["/", "/mentor", "/history", "/resume", "/profile", "/login"];
+const ROUTES = ["/", "/mentor", "/history", "/progress", "/resume", "/profile", "/login"];
 
 // Parses the hash into { path, conversationId }. "/mentor/123" maps to the
 // "/mentor" page with conversationId = 123; everything else is unchanged.
@@ -81,13 +98,17 @@ function renderProtectedShell(path, conversationId) {
         ${navLink("/", "Dashboard", path)}
         ${navLink("/mentor", "Ask mentor", path)}
         ${navLink("/history", "History", path)}
+        ${navLink("/progress", "Progress", path)}
         ${navLink("/resume", "Resume review", path)}
         <div style="margin-top:auto; padding-top:16px;">
           <a href="#/profile" class="sidebar-profile ${path === "/profile" ? "active" : ""}">
             <div class="profile-avatar">${escapeHtml(initials(user.name))}</div>
             <span class="sidebar-profile-name">${escapeHtml(user.name)}</span>
           </a>
-          <button id="logout-btn" class="button-secondary" style="width:100%; margin-top:10px">Log out</button>
+          <button id="theme-toggle-btn" class="button-secondary theme-toggle-btn" style="width:100%; margin-top:10px">
+            ${document.documentElement.getAttribute("data-theme") === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+          </button>
+          <button id="logout-btn" class="button-secondary" style="width:100%; margin-top:8px">Log out</button>
         </div>
       </div>
       <div id="main-outlet"></div>
@@ -99,10 +120,16 @@ function renderProtectedShell(path, conversationId) {
     navigate("/login");
   });
 
+  document.getElementById("theme-toggle-btn").addEventListener("click", (e) => {
+    const next = toggleTheme();
+    e.currentTarget.textContent = next === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
+  });
+
   const outlet = document.getElementById("main-outlet");
   if (path === "/") renderDashboardPage(outlet);
   else if (path === "/mentor") renderMentorPage(outlet, conversationId);
   else if (path === "/history") renderHistoryPage(outlet);
+  else if (path === "/progress") renderProgressPage(outlet);
   else if (path === "/resume") renderResumePage(outlet);
   else if (path === "/profile") renderProfilePage(outlet);
 }
@@ -122,7 +149,7 @@ function renderAuthPage() {
       <div class="auth-shell">
         <div class="auth-card">
           <div class="brand" style="margin-bottom:4px">MentorAI</div>
-          <p style="color:#6b6a63; font-size:13px; margin-top:0; margin-bottom:20px">
+          <p style="color:var(--text-muted); font-size:13px; margin-top:0; margin-bottom:20px">
             ${mode === "login" ? "Log in to continue" : "Create your student account"}
           </p>
 
@@ -153,7 +180,7 @@ function renderAuthPage() {
 
           <p style="font-size:13px; margin-top:16px; text-align:center">
             ${mode === "login" ? "Don't have an account? " : "Already have an account? "}
-            <a href="#" id="auth-toggle" style="color:#185fa5">${mode === "login" ? "Sign up" : "Log in"}</a>
+            <a href="#" id="auth-toggle" style="color:var(--accent)">${mode === "login" ? "Sign up" : "Log in"}</a>
           </p>
         </div>
       </div>
@@ -223,7 +250,7 @@ async function renderDashboardPage(outlet) {
 
       <div class="card">
         <p style="margin:0 0 8px; font-weight:500">Get started</p>
-        <p style="margin:0 0 12px; color:#6b6a63; font-size:14px">
+        <p style="margin:0 0 12px; color:var(--text-muted); font-size:14px">
           Ask your mentor a question, or upload your resume for a readiness review.
         </p>
         <div style="display:flex; gap:8px">
@@ -285,7 +312,7 @@ function renderNewMentorChat(outlet) {
         <div class="mode-grid">
           ${MODES.map(
             (m) => `
-            <button data-mode="${m.id}" class="mode-card ${mode === m.id ? "selected" : ""}" style="background:#fff; color:inherit">
+            <button data-mode="${m.id}" class="mode-card ${mode === m.id ? "selected" : ""}" style="background:var(--card-bg); color:inherit">
               <p class="mode-title">${m.title}</p>
               <p class="mode-desc">${m.desc}</p>
             </button>`
@@ -351,7 +378,7 @@ async function renderMentorThread(outlet, conversationId) {
       </div>
 
       <p class="error-text" id="thread-error" style="display:none"></p>
-      <div id="thread-messages"><p style="color:#6b6a63; font-size:14px">Loading…</p></div>
+      <div id="thread-messages"><p style="color:var(--text-muted); font-size:14px">Loading…</p></div>
 
       <div class="card" id="thread-reply-card" style="display:none">
         <textarea id="thread-reply" rows="2" placeholder="Continue the conversation…"></textarea>
@@ -408,7 +435,7 @@ async function renderMentorThread(outlet, conversationId) {
         <div class="chat-bubble chat-bubble-assistant">
           <span class="badge">${escapeHtml(t.mode)}</span>
           <p style="font-weight:500; margin:8px 0 4px">Summary</p>
-          <p style="font-size:14px; color:#3a392f; margin:0 0 12px">${escapeHtml(t.summary)}</p>
+          <p style="font-size:14px; color:var(--text); margin:0 0 12px">${escapeHtml(t.summary)}</p>
 
           ${
             steps.length > 0
@@ -570,7 +597,7 @@ async function renderHistoryPage(outlet) {
       <h2 style="font-weight:500">Session history</h2>
       <p class="error-text" id="history-error" style="display:none"></p>
       <div class="card" id="history-list">
-        <p style="color:#6b6a63; font-size:14px">Loading…</p>
+        <p style="color:var(--text-muted); font-size:14px">Loading…</p>
       </div>
     </div>
   `;
@@ -588,7 +615,7 @@ async function renderHistoryPage(outlet) {
     const listEl = document.getElementById("history-list");
 
     if (conversations.length === 0) {
-      listEl.innerHTML = `<p style="color:#6b6a63; font-size:14px">No sessions yet. Ask your mentor something first.</p>`;
+      listEl.innerHTML = `<p style="color:var(--text-muted); font-size:14px">No sessions yet. Ask your mentor something first.</p>`;
       return;
     }
 
@@ -609,7 +636,7 @@ async function renderHistoryPage(outlet) {
             <span class="badge">${escapeHtml(c.mode)}</span>
             ${c.turn_count > 1 ? `<span class="badge badge-muted">${c.turn_count} messages</span>` : ""}
             <p style="font-weight:500; margin:4px 0">${escapeHtml(c.title)}</p>
-            <p style="font-size:13px; color:#6b6a63; margin:0">${escapeHtml(c.last_message)}</p>
+            <p style="font-size:13px; color:var(--text-muted); margin:0">${escapeHtml(c.last_message)}</p>
           </a>
         </div>`
       )
@@ -649,6 +676,184 @@ async function renderHistoryPage(outlet) {
       errorEl.style.display = "block";
       if (itemEl) itemEl.style.opacity = "1";
     }
+  }
+}
+
+// ---- pages/Progress.jsx ----
+// Streak / XP / level stat cards, a weekly study-hours bar chart, a skills
+// radar chart (plain inline SVG, no charting library), topic progress bars,
+// and the current roadmap — all backed by /dashboard/progress.
+
+function progressStatCard(icon, value, label, colorClass) {
+  return `
+    <div class="progress-stat-card">
+      <div class="progress-stat-icon ${colorClass}">${icon}</div>
+      <div>
+        <p class="progress-stat-value">${escapeHtml(String(value))}</p>
+        <p class="progress-stat-label">${escapeHtml(label)}</p>
+      </div>
+    </div>
+  `;
+}
+
+function barChartHtml(days) {
+  const max = Math.max(1, ...days.map((d) => d.hours));
+  return `
+    <div class="bar-chart">
+      ${days
+        .map(
+          (d) => `
+        <div class="bar-col">
+          <div class="bar-track">
+            <div class="bar-fill" style="height:${Math.max(4, (d.hours / max) * 100)}%"></div>
+          </div>
+          <span class="bar-label">${escapeHtml(d.day)}</span>
+        </div>`
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+// Builds a pentagon-style radar chart from N labeled 0-100 values, entirely
+// as inline SVG (grid rings, axis lines, one filled data polygon, labels).
+function radarChartSvg(skills, size = 240) {
+  const center = size / 2;
+  const maxR = center - 40;
+  const n = skills.length;
+  const angleFor = (i) => (Math.PI * 2 * i) / n - Math.PI / 2;
+  const pointAt = (i, value) => {
+    const r = (value / 100) * maxR;
+    const a = angleFor(i);
+    return [center + r * Math.cos(a), center + r * Math.sin(a)];
+  };
+
+  let gridRings = "";
+  for (let lvl = 1; lvl <= 4; lvl++) {
+    const r = (maxR * lvl) / 4;
+    const pts = skills
+      .map((_, i) => {
+        const a = angleFor(i);
+        return `${center + r * Math.cos(a)},${center + r * Math.sin(a)}`;
+      })
+      .join(" ");
+    gridRings += `<polygon points="${pts}" class="radar-grid" />`;
+  }
+
+  const axisLines = skills
+    .map((_, i) => {
+      const [x, y] = pointAt(i, 100);
+      return `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" class="radar-axis" />`;
+    })
+    .join("");
+
+  const dataPts = skills.map((s, i) => pointAt(i, s.value).join(",")).join(" ");
+
+  const labels = skills
+    .map((s, i) => {
+      const [x, y] = pointAt(i, 122);
+      return `<text x="${x}" y="${y}" class="radar-label" text-anchor="middle" dominant-baseline="middle">${escapeHtml(
+        s.label
+      )}</text>`;
+    })
+    .join("");
+
+  return `
+    <svg viewBox="0 0 ${size} ${size}" class="radar-svg">
+      ${gridRings}
+      ${axisLines}
+      <polygon points="${dataPts}" class="radar-data" />
+      ${labels}
+    </svg>
+  `;
+}
+
+function topicRow(label, value) {
+  return `
+    <div class="topic-row">
+      <div class="topic-row-header">
+        <span>${escapeHtml(label)}</span>
+        <span>${value}%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="width:${value}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+function roadmapStep(label, status) {
+  const icon = status === "done" ? "✓" : status === "current" ? "●" : "○";
+  return `
+    <div class="roadmap-step roadmap-step-${status}">
+      <span class="roadmap-step-icon">${icon}</span>
+      <span>${escapeHtml(label)}</span>
+    </div>
+  `;
+}
+
+async function renderProgressPage(outlet) {
+  outlet.innerHTML = `
+    <div class="main">
+      <h2 style="font-weight:500; margin-bottom:2px">Your Progress</h2>
+      <p style="color:var(--text-muted); font-size:14px; margin-top:0">Track your learning journey and achievements</p>
+      <p class="error-text" id="progress-error" style="display:none"></p>
+      <div id="progress-body">
+        <p style="color:var(--text-muted); font-size:14px">Loading…</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    const data = await api.progressStats();
+    paint(data);
+  } catch (e) {
+    const errorEl = document.getElementById("progress-error");
+    errorEl.textContent = e.message;
+    errorEl.style.display = "block";
+    document.getElementById("progress-body").innerHTML = "";
+  }
+
+  function paint(data) {
+    const body = document.getElementById("progress-body");
+    body.innerHTML = `
+      <div class="progress-stat-grid">
+        ${progressStatCard("🔥", data.day_streak, "Day Streak", "icon-orange")}
+        ${progressStatCard("⏱️", `${data.hours_this_week}h`, "This Week", "icon-blue")}
+        ${progressStatCard("⚡", data.total_xp, "Total XP", "icon-purple")}
+        ${progressStatCard("⭐", data.level, "Current Level", "icon-green")}
+      </div>
+
+      <div class="progress-charts-grid">
+        <div class="card">
+          <p class="card-title">Study Hours</p>
+          <p class="card-subtitle">Your learning activity over time</p>
+          ${barChartHtml(data.study_hours)}
+        </div>
+        <div class="card" style="display:flex; flex-direction:column; align-items:center">
+          <p class="card-title" style="align-self:flex-start">Skills Radar</p>
+          <p class="card-subtitle" style="align-self:flex-start">Your competency across areas</p>
+          ${radarChartSvg(data.skills)}
+        </div>
+      </div>
+
+      <div class="progress-lower-grid">
+        <div class="card">
+          <p class="card-title">Topic Progress</p>
+          <p class="card-subtitle">Your learning progress by topic</p>
+          ${data.topics.map((t) => topicRow(t.label, t.value)).join("")}
+        </div>
+
+        <div class="card">
+          <p class="card-title">Current Roadmap</p>
+          <p class="card-subtitle">Overall Progress — ${data.roadmap.overall_percent}%</p>
+          <div class="progress-bar-track" style="margin-bottom:16px">
+            <div class="progress-bar-fill" style="width:${data.roadmap.overall_percent}%"></div>
+          </div>
+          ${data.roadmap.steps.map((s) => roadmapStep(s.label, s.status)).join("")}
+        </div>
+      </div>
+    `;
   }
 }
 
@@ -714,7 +919,7 @@ function renderResumePage(outlet) {
     const suggestions = result.suggestions || [];
 
     resultEl.innerHTML = `
-      <div style="border-top:1px solid #ece9df; margin-top:16px; padding-top:16px">
+      <div style="border-top:1px solid var(--border); margin-top:16px; padding-top:16px">
         <div class="stat-grid" style="grid-template-columns:1fr">
           <div class="stat-card">
             <p class="stat-label">Readiness score</p>
