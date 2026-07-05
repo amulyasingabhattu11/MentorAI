@@ -108,11 +108,85 @@
         "Use a standard format for listing projects, including a brief description, technologies used, and accomplishments"
       ],
       "created_at": "2026-07-05T09:14:14.548Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "target_role": "",
+      "score": 85,
+      "missing_skills": [
+        "Cloud computing",
+        "Cybersecurity",
+        "DevOps"
+      ],
+      "suggestions": [
+        "Quantify the impact of projects by including metrics such as user acquisition, revenue growth, or performance improvements",
+        "Consider adding relevant internships or co-op experiences to demonstrate practical application of skills",
+        "Tailor the career objective to a specific industry or role to increase clarity and focus",
+        "Use action verbs consistently throughout the resume to describe achievements and skills",
+        "Emphasize transferable skills from projects and experiences, such as collaboration, problem-solving, and adaptability"
+      ],
+      "created_at": "2026-07-05T15:58:43.720Z"
     }
   ],
   "nextId": {
     "users": 2,
     "mentorSessions": 8,
-    "resumeReviews": 2
-  }
+    "resumeReviews": 3,
+    "roadmaps": 2
+  },
+  "roadmaps": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "title": "Data Scientist",
+      "goal": "Data Scientist",
+      "steps": [
+        {
+          "idx": 0,
+          "label": "Learn programming basics",
+          "subtopics": 9,
+          "completed": false
+        },
+        {
+          "idx": 1,
+          "label": "Study data structures",
+          "subtopics": 7,
+          "completed": false
+        },
+        {
+          "idx": 2,
+          "label": "Master machine learning",
+          "subtopics": 4,
+          "completed": false
+        },
+        {
+          "idx": 3,
+          "label": "Explore data visualization",
+          "subtopics": 4,
+          "completed": false
+        },
+        {
+          "idx": 4,
+          "label": "Practice with projects",
+          "subtopics": 5,
+          "completed": false
+        },
+        {
+          "idx": 5,
+          "label": "Pursue data science certification",
+          "subtopics": 3,
+          "completed": false
+        },
+        {
+          "idx": 6,
+          "label": "Join data science community",
+          "subtopics": 4,
+          "completed": false
+        }
+      ],
+      "created_at": "2026-07-05T15:55:23.745Z",
+      "updated_at": "2026-07-05T15:55:32.235Z"
+    }
+  ]
 }

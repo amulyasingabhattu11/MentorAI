@@ -334,21 +334,93 @@ function dashboardStats(userId) {
 
 // ---- progress page aggregates ----
 
-const TOPIC_KEYWORDS = [
-  { label: "Data Structures", keywords: ["data structure", "array", "linked list", "stack", "queue", "tree", "graph", "hash"] },
-  { label: "Algorithms", keywords: ["algorithm", "sorting", "search", "dynamic programming", "recursion", "complexity", "big o"] },
-  { label: "System Design", keywords: ["system design", "scalability", "microservice", "architecture", "load balancer", "distributed"] },
-  { label: "Database Design", keywords: ["database", "sql", "schema", "normalization", "index", "query", "nosql"] },
-  { label: "Web Development", keywords: ["web", "frontend", "backend", "react", "html", "css", "javascript", "api", "rest"] },
-];
+// ---- keyword banks grouped by goal domain ----
 
-const SKILL_KEYWORDS = [
-  { label: "DSA", keywords: ["data structure", "algorithm", "array", "tree", "graph", "recursion"] },
-  { label: "Databases", keywords: ["database", "sql", "schema", "query", "nosql"] },
-  { label: "DevOps", keywords: ["devops", "ci/cd", "docker", "kubernetes", "deployment", "cloud"] },
-  { label: "Frontend", keywords: ["frontend", "react", "css", "html", "ui", "component"] },
-  { label: "Backend", keywords: ["backend", "api", "server", "node", "express", "endpoint"] },
-];
+const DOMAIN_PROFILES = {
+  // Software / tech (default)
+  tech: {
+    topics: [
+      { label: "Data Structures", keywords: ["data structure", "array", "linked list", "stack", "queue", "tree", "graph", "hash"] },
+      { label: "Algorithms", keywords: ["algorithm", "sorting", "search", "dynamic programming", "recursion", "complexity", "big o"] },
+      { label: "System Design", keywords: ["system design", "scalability", "microservice", "architecture", "load balancer", "distributed"] },
+      { label: "Database Design", keywords: ["database", "sql", "schema", "normalization", "index", "query", "nosql"] },
+      { label: "Web Development", keywords: ["web", "frontend", "backend", "react", "html", "css", "javascript", "api", "rest"] },
+    ],
+    skills: [
+      { label: "DSA", keywords: ["data structure", "algorithm", "array", "tree", "graph", "recursion"] },
+      { label: "Databases", keywords: ["database", "sql", "schema", "query", "nosql"] },
+      { label: "DevOps", keywords: ["devops", "ci/cd", "docker", "kubernetes", "deployment", "cloud"] },
+      { label: "Frontend", keywords: ["frontend", "react", "css", "html", "ui", "component"] },
+      { label: "Backend", keywords: ["backend", "api", "server", "node", "express", "endpoint"] },
+    ],
+  },
+  // UPSC / civil services
+  upsc: {
+    topics: [
+      { label: "History & Culture", keywords: ["history", "culture", "ancient", "medieval", "modern", "heritage", "art"] },
+      { label: "Polity & Governance", keywords: ["polity", "constitution", "governance", "parliament", "judiciary", "policy", "law"] },
+      { label: "Geography", keywords: ["geography", "climate", "soil", "river", "map", "environment", "disaster"] },
+      { label: "Economy", keywords: ["economy", "gdp", "inflation", "budget", "trade", "fiscal", "monetary", "banking"] },
+      { label: "Current Affairs", keywords: ["current", "news", "affair", "government", "scheme", "report", "index", "summit"] },
+    ],
+    skills: [
+      { label: "History", keywords: ["history", "culture", "art", "heritage"] },
+      { label: "Polity", keywords: ["polity", "constitution", "parliament", "judiciary"] },
+      { label: "Geography", keywords: ["geography", "climate", "river", "disaster"] },
+      { label: "Economy", keywords: ["economy", "budget", "trade", "fiscal"] },
+      { label: "Current Affairs", keywords: ["current", "scheme", "report", "news"] },
+    ],
+  },
+  // Medical / NEET / healthcare
+  medical: {
+    topics: [
+      { label: "Anatomy", keywords: ["anatomy", "organ", "body", "muscle", "bone", "tissue", "cell"] },
+      { label: "Physiology", keywords: ["physiology", "function", "metabolism", "hormone", "nervous", "cardiac"] },
+      { label: "Biochemistry", keywords: ["biochemistry", "enzyme", "protein", "dna", "rna", "carbohydrate", "lipid"] },
+      { label: "Pharmacology", keywords: ["pharmacology", "drug", "medicine", "dosage", "side effect", "treatment"] },
+      { label: "Pathology", keywords: ["pathology", "disease", "infection", "cancer", "diagnosis", "syndrome"] },
+    ],
+    skills: [
+      { label: "Anatomy", keywords: ["anatomy", "organ", "muscle", "bone"] },
+      { label: "Physiology", keywords: ["physiology", "function", "metabolism"] },
+      { label: "Biochemistry", keywords: ["biochemistry", "enzyme", "protein"] },
+      { label: "Pharmacology", keywords: ["pharmacology", "drug", "medicine"] },
+      { label: "Pathology", keywords: ["pathology", "disease", "infection"] },
+    ],
+  },
+  // Finance / MBA / CA
+  finance: {
+    topics: [
+      { label: "Accounting", keywords: ["accounting", "journal", "ledger", "balance sheet", "debit", "credit", "audit"] },
+      { label: "Finance", keywords: ["finance", "investment", "stock", "bond", "capital", "return", "portfolio"] },
+      { label: "Marketing", keywords: ["marketing", "brand", "customer", "segmentation", "pricing", "promotion"] },
+      { label: "Management", keywords: ["management", "strategy", "leadership", "operations", "supply chain", "hr"] },
+      { label: "Economics", keywords: ["economics", "demand", "supply", "market", "price", "elasticity", "gdp"] },
+    ],
+    skills: [
+      { label: "Accounting", keywords: ["accounting", "audit", "ledger"] },
+      { label: "Finance", keywords: ["finance", "investment", "stock"] },
+      { label: "Marketing", keywords: ["marketing", "brand", "customer"] },
+      { label: "Management", keywords: ["management", "strategy", "leadership"] },
+      { label: "Economics", keywords: ["economics", "demand", "supply"] },
+    ],
+  },
+};
+
+/**
+ * Pick the best-matching domain profile by scanning ALL available text about the user:
+ * their goal, career_roadmap text, and recent session questions.
+ * Falls back to "tech" when nothing matches.
+ */
+function detectDomain(textsArray) {
+  const combined = (Array.isArray(textsArray) ? textsArray : [textsArray])
+    .join(" ")
+    .toLowerCase();
+  if (/upsc|ias\b|ips\b|civil service|ifs\b|groups.*upsc|upsc.*groups|prelim|mains exam|general studies|crack.*group|crack.*upsc/.test(combined)) return "upsc";
+  if (/neet|mbbs|medical|doctor|pharmacy|nursing|clinical/.test(combined)) return "medical";
+  if (/\bmba\b|ca\b|cfa\b|cpa\b|finance|accounting|marketing|commerce|\bmanagement\b/.test(combined)) return "finance";
+  return "tech";
+}
 
 function scoreAgainst(sessions, groups, baseline) {
   return groups.map((g, idx) => {
@@ -368,7 +440,10 @@ function dayKey(iso) {
 function progressStats(userId) {
   const sessions = state.mentorSessions.filter((s) => s.user_id === userId);
   const reviews = state.resumeReviews.filter((r) => r.user_id === userId);
+  const user = findUserById(userId);
+  const goal = (user && user.goal) || "";
 
+  // ---- streak ----
   const activeDays = new Set(sessions.map((s) => dayKey(s.created_at)));
   let streak = 0;
   const cursor = new Date();
@@ -377,6 +452,7 @@ function progressStats(userId) {
     cursor.setDate(cursor.getDate() - 1);
   }
 
+  // ---- study hours (last 7 days) ----
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const studyHours = [];
   for (let i = 6; i >= 0; i--) {
@@ -388,29 +464,58 @@ function progressStats(userId) {
   }
   const hoursThisWeek = Math.round(studyHours.reduce((sum, d) => sum + d.hours, 0) * 10) / 10;
 
+  // ---- XP / level ----
   const totalXp = sessions.length * 10 + reviews.length * 20;
   const level = Math.floor(totalXp / 100) + 1;
 
-  const topics = scoreAgainst(sessions, TOPIC_KEYWORDS, [20, 15, 10, 15, 25]);
-  const skills = scoreAgainst(sessions, SKILL_KEYWORDS, [15, 10, 5, 20, 15]);
+  // ---- domain detection — scan goal AND recent session questions only.
+  // career_roadmap is free-form user text (e.g. "crack groups like UPSC") that
+  // can mention any domain keyword without the user actually studying it, so we
+  // deliberately exclude it from domain detection to avoid false positives.
+  const recentSessionText = sessions
+    .slice(-10)
+    .map((s) => `${s.question} ${s.summary}`)
+    .join(" ");
+  const domain = detectDomain([goal, recentSessionText]);
+  const profile = DOMAIN_PROFILES[domain];
+  const baseline = [20, 15, 10, 15, 25];
+  const topics = scoreAgainst(sessions, profile.topics, baseline);
+  const skills = scoreAgainst(sessions, profile.skills, baseline.slice(0, 5));
 
-  const user = findUserById(userId);
-  const raw = (user && user.career_roadmap) || "";
-  let stepLabels = raw
-    .split(/\n|->/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (stepLabels.length === 0) {
-    stepLabels = ["Programming Basics", "Data Structures", "System Design", "Cloud Computing"];
+  // ---- current roadmap ----
+  // Always prefer structured roadmaps (created via Career Roadmap page).
+  // When none exist, return empty steps — the frontend shows a "create one" prompt.
+  // We never use the old career_roadmap text field for step labels because it
+  // contains whatever the user typed (including legacy goals like "Groups UPSC")
+  // and cannot be reliably parsed into meaningful steps.
+  const userRoadmaps = listRoadmaps(userId);
+  let overallPercent, steps;
+
+  if (userRoadmaps.length > 0) {
+    // Pick the roadmap updated most recently
+    const latest = userRoadmaps
+      .slice()
+      .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))[0];
+    const dict = roadmapToDict(latest);
+    overallPercent = dict.overall_percent;
+
+    // Find the first incomplete step to mark as "current"
+    const firstIncompleteIdx = dict.steps.findIndex((s) => !s.completed);
+    steps = dict.steps.map((s, idx) => ({
+      label: s.label,
+      status: s.completed
+        ? "done"
+        : idx === firstIncompleteIdx
+        ? "current"
+        : "todo",
+    }));
+  } else {
+    // No structured roadmap yet — signal the frontend to show an empty state.
+    overallPercent = 0;
+    steps = [];
   }
-  const overallPercent = Math.min(100, Math.round((totalXp / 500) * 100));
-  const doneCount = Math.floor((overallPercent / 100) * stepLabels.length);
-  const steps = stepLabels.map((label, idx) => ({
-    label,
-    status: idx < doneCount ? "done" : idx === doneCount ? "current" : "todo",
-  }));
 
-  // recent activity from conversations
+  // ---- recent activity ----
   const recentConversations = listConversations(userId, null).slice(0, 5).map((c) => ({
     type: c.mode === "code" ? "code_review" : "chat",
     title: c.title.length > 60 ? c.title.slice(0, 60) + "…" : c.title,
@@ -418,14 +523,33 @@ function progressStats(userId) {
     created_at: c.created_at,
   }));
 
-  // daily goals (derived from today's activity)
+  // ---- daily goals (domain-aware) ----
   const todayKey = new Date().toISOString().slice(0, 10);
   const todaySessions = sessions.filter((s) => dayKey(s.created_at) === todayKey).length;
-  const dailyGoals = [
-    { label: "Complete DSA problem", done: totalXp >= 10 },
-    { label: "Review JavaScript concepts", done: todaySessions >= 1 },
-    { label: "Practice coding problems", done: todaySessions >= 2 },
-  ];
+
+  const dailyGoalsByDomain = {
+    upsc: [
+      { label: "Read a Current Affairs article", done: todaySessions >= 1 },
+      { label: "Revise one GS topic", done: todaySessions >= 2 },
+      { label: "Attempt a mock question", done: totalXp >= 30 },
+    ],
+    medical: [
+      { label: "Review anatomy concepts", done: todaySessions >= 1 },
+      { label: "Study a clinical case", done: todaySessions >= 2 },
+      { label: "Practice MCQs", done: totalXp >= 30 },
+    ],
+    finance: [
+      { label: "Study a finance concept", done: todaySessions >= 1 },
+      { label: "Solve a case study", done: todaySessions >= 2 },
+      { label: "Review current affairs (economy)", done: totalXp >= 30 },
+    ],
+    tech: [
+      { label: "Complete a coding problem", done: totalXp >= 10 },
+      { label: "Study a concept with AI Mentor", done: todaySessions >= 1 },
+      { label: "Practice 2+ problems", done: todaySessions >= 2 },
+    ],
+  };
+  const dailyGoals = dailyGoalsByDomain[domain] || dailyGoalsByDomain.tech;
 
   return {
     day_streak: streak,
