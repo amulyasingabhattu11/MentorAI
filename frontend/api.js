@@ -1,6 +1,4 @@
-// api.js — mirrors frontend/src/api.js (same endpoints, same shapes), plain fetch instead of
-// import.meta.env: since there's no build step, the API base URL is just a plain constant.
-// Change this if your backend runs somewhere other than localhost:5000.
+// api.js — all API calls to the MentorAI backend
 
 const BASE_URL = window.MENTORAI_API_URL || "http://localhost:5000";
 
@@ -37,8 +35,6 @@ const api = {
       body: JSON.stringify({ email, password }),
     }).then(handle),
 
-  // conversationId is optional: omit it to start a new thread, pass it to
-  // reply within an existing one.
   askMentor: (mode, question, conversationId) =>
     fetch(`${BASE_URL}/mentor/ask`, {
       method: "POST",
@@ -46,12 +42,11 @@ const api = {
       body: JSON.stringify({ mode, question, conversation_id: conversationId || undefined }),
     }).then(handle),
 
-  // now returns one row per conversation: { conversation_id, mode, title,
-  // last_message, turn_count, created_at, updated_at }
   mentorHistory: (mode) =>
     fetch(`${BASE_URL}/mentor/history${mode ? `?mode=${mode}` : ""}`, {
       headers: { ...authHeaders() },
     }).then(handle),
+
   deleteConversation: (conversationId) => {
     const id = Number(conversationId);
     if (!Number.isFinite(id)) {
@@ -62,7 +57,7 @@ const api = {
       headers: { ...authHeaders() },
     }).then(handle);
   },
-  // full ordered list of turns for one thread
+
   getConversation: (conversationId) =>
     fetch(`${BASE_URL}/mentor/conversations/${conversationId}`, {
       headers: { ...authHeaders() },
@@ -73,8 +68,6 @@ const api = {
       headers: { ...authHeaders() },
     }).then(handle),
 
-  // powers the Progress page: streak, XP/level, study-hours chart, skills
-  // radar, topic progress, and roadmap step status
   progressStats: () =>
     fetch(`${BASE_URL}/dashboard/progress`, {
       headers: { ...authHeaders() },
@@ -107,11 +100,43 @@ const api = {
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ goal, career_roadmap: careerRoadmap }),
     }).then(handle),
-  
+
   generateRoadmap: (goal) =>
     fetch(`${BASE_URL}/mentor/roadmap`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ goal }),
+    }).then(handle),
+
+  // ---- Career Roadmap ----
+
+  listRoadmaps: () =>
+    fetch(`${BASE_URL}/roadmap/list`, {
+      headers: { ...authHeaders() },
+    }).then(handle),
+
+  getRoadmap: (id) =>
+    fetch(`${BASE_URL}/roadmap/${id}`, {
+      headers: { ...authHeaders() },
+    }).then(handle),
+
+  createRoadmap: (goal, title) =>
+    fetch(`${BASE_URL}/roadmap/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ goal, title }),
+    }).then(handle),
+
+  updateRoadmapStep: (roadmapId, stepIdx, completed) =>
+    fetch(`${BASE_URL}/roadmap/${roadmapId}/step/${stepIdx}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ completed }),
+    }).then(handle),
+
+  deleteRoadmap: (id) =>
+    fetch(`${BASE_URL}/roadmap/${id}`, {
+      method: "DELETE",
+      headers: { ...authHeaders() },
     }).then(handle),
 };

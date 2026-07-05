@@ -1,4 +1,4 @@
-// llm.js — Groq calls + prompts (mirrors backend/llm.py from the Flask version)
+// llm.js — Groq calls + prompts
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
@@ -43,7 +43,7 @@ const ROADMAP_SYSTEM_PROMPT =
   "Given the student's goal, respond ONLY with a JSON object (no markdown, no code fences) " +
   'in this exact shape: {"roadmap": ["stage 1", "stage 2", "stage 3", "stage 4"]}. ' +
   "Keep each stage short (3-6 words), ordered chronologically from where a beginner would " +
-  "start through to achieving the goal, 4-6 stages total.";
+  "start through to achieving the goal, 5-8 stages total. Make them specific and actionable.";
 
 async function callGroqMessages(messages) {
   const apiKey = process.env.GROQ_API_KEY;
@@ -82,8 +82,6 @@ async function callGroq(systemPrompt, userContent) {
   ]);
 }
 
-// history is an array of prior turns in this conversation: [{ question, summary, steps, resources }, ...]
-// so a "reply" gets the whole thread as context, not just the latest message.
 async function askMentor(mode, question, history = []) {
   const systemPrompt = MODE_PROMPTS[mode] || MODE_PROMPTS.career;
 
@@ -101,7 +99,6 @@ async function askMentor(mode, question, history = []) {
   try {
     result = await callGroqMessages(messages);
   } catch (e) {
-    // Fail soft so the demo never shows a raw 500 — still useful for grading
     result = {
       summary: "The mentor is temporarily unavailable, here is a placeholder response.",
       steps: ["Check GROQ_API_KEY is set on the server", `Error: ${e.message}`],
@@ -132,15 +129,22 @@ async function analyzeResume(resumeText, targetRole) {
   return result;
 }
 
-async function generateRoadmap(goal) {
+// Returns the roadmap as an array of step label strings (used by the new roadmap route).
+async function generateRoadmapSteps(goal) {
   let result;
   try {
     result = await callGroq(ROADMAP_SYSTEM_PROMPT, goal);
   } catch (e) {
-    result = { roadmap: [`Roadmap unavailable: ${e.message}`] };
+    result = { roadmap: ["Programming Basics", "Data Structures & Algorithms", "System Design", "Projects & Portfolio", "Interview Preparation"] };
   }
   const stages = Array.isArray(result.roadmap) ? result.roadmap.filter(Boolean) : [];
-  return stages.join(" -> ");
+  return stages.length > 0 ? stages : ["Programming Basics", "Data Structures & Algorithms", "System Design", "Projects & Portfolio", "Interview Preparation"];
 }
 
-module.exports = { askMentor, analyzeResume, generateRoadmap };
+// Legacy: kept for backward compat with the old /mentor/roadmap route (returns a string).
+async function generateRoadmap(goal) {
+  const steps = await generateRoadmapSteps(goal);
+  return steps.join(" -> ");
+}
+
+module.exports = { askMentor, analyzeResume, generateRoadmap, generateRoadmapSteps };

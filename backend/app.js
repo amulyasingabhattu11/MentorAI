@@ -1,15 +1,16 @@
-// app.js — mirrors backend/app.py (Flask create_app)
+// app.js
 
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-require("./db"); // creates tables on require, same as db.create_all()
+require("./db"); // creates tables on require
 
 const authRoutes = require("./routes/auth");
 const mentorRoutes = require("./routes/mentor");
 const resumeRoutes = require("./routes/resume");
 const dashboardRoutes = require("./routes/dashboard");
+const roadmapRoutes = require("./routes/roadmap");
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/auth", authRoutes);
 app.use("/mentor", mentorRoutes);
 app.use("/resume", resumeRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use("/roadmap", roadmapRoutes);
 
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });

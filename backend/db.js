@@ -1,7 +1,4 @@
-// db.js — lightweight JSON-file persistence (mirrors backend/models.py from the Flask version,
-// but avoids a native database dependency, since better-sqlite3 needs a C++ build step that
-// isn't guaranteed to work on every judging/grading machine. Same data shape, same API surface,
-// just backed by a JSON file on disk + plain Node fs, in keeping with the bootcamp's JS/JSON scope.)
+// db.js — JSON-file persistence. Same data shape as original, with roadmap support added.
 
 const fs = require("fs");
 const path = require("path");
@@ -14,15 +11,44 @@ function nowIso() {
 }
 
 function load() {
+  const defaultState = () => ({
+    users: [],
+    mentorSessions: [],
+    resumeReviews: [],
+    roadmaps: [],
+    nextId: { users: 1, mentorSessions: 1, resumeReviews: 1, roadmaps: 1 },
+  });
+
   if (!fs.existsSync(DATA_FILE)) {
-    return { users: [], mentorSessions: [], resumeReviews: [], nextId: { users: 1, mentorSessions: 1, resumeReviews: 1 } };
+    return defaultState();
   }
+
   const raw = fs.readFileSync(DATA_FILE, "utf-8");
+  let parsed;
   try {
-    return JSON.parse(raw);
+    parsed = JSON.parse(raw);
   } catch {
-    return { users: [], mentorSessions: [], resumeReviews: [], nextId: { users: 1, mentorSessions: 1, resumeReviews: 1 } };
+    // Corrupt JSON — start fresh rather than crashing
+    return defaultState();
   }
+
+  // Defensive migration: patch missing fields without touching existing data.
+  // Each guard is independent so a partially-migrated file is handled correctly.
+  if (!Array.isArray(parsed.users)) parsed.users = [];
+  if (!Array.isArray(parsed.mentorSessions)) parsed.mentorSessions = [];
+  if (!Array.isArray(parsed.resumeReviews)) parsed.resumeReviews = [];
+  if (!Array.isArray(parsed.roadmaps)) parsed.roadmaps = [];
+
+  if (!parsed.nextId || typeof parsed.nextId !== "object") {
+    parsed.nextId = { users: 1, mentorSessions: 1, resumeReviews: 1, roadmaps: 1 };
+  } else {
+    if (!parsed.nextId.users) parsed.nextId.users = 1;
+    if (!parsed.nextId.mentorSessions) parsed.nextId.mentorSessions = 1;
+    if (!parsed.nextId.resumeReviews) parsed.nextId.resumeReviews = 1;
+    if (!parsed.nextId.roadmaps) parsed.nextId.roadmaps = 1;
+  }
+
+  return parsed;
 }
 
 function save(state) {
@@ -31,10 +57,7 @@ function save(state) {
 
 let state = load();
 
-// ---- migration: backfill conversation_id for turns saved before threading
-// was added. Older rows in mentorai.db.json predate this field entirely, so
-// group-by-conversation would otherwise key them under `undefined`. This
-// runs once per process start and persists the fix to disk.
+// ---- migration: backfill conversation_id ----
 function migrateMissingConversationIds() {
   let changed = false;
   for (const s of state.mentorSessions) {
@@ -98,9 +121,6 @@ function userToDict(user) {
 }
 
 // ---- mentor sessions ----
-// Each row is a single turn. Turns that belong to the same thread share a
-// conversation_id. A brand-new conversation's root turn uses its own id as
-// the conversation_id (so no separate id sequence/table is needed).
 
 function createMentorSession({ userId, mode, question, summary, steps, resources, conversationId }) {
   const id = nextId("mentorSessions");
@@ -120,12 +140,12 @@ function createMentorSession({ userId, mode, question, summary, steps, resources
   return session;
 }
 
-// Flat list of turns (kept for any internal/back-compat use).
 function listMentorSessions(userId, mode) {
   let rows = state.mentorSessions.filter((s) => s.user_id === userId);
   if (mode) rows = rows.filter((s) => s.mode === mode);
   return rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).slice(0, 50);
 }
+
 function deleteConversation(userId, conversationId) {
   const before = state.mentorSessions.length;
   state.mentorSessions = state.mentorSessions.filter(
@@ -135,8 +155,7 @@ function deleteConversation(userId, conversationId) {
   if (deleted) save(state);
   return deleted;
 }
-// Grouped-by-thread list for the History page: one row per conversation,
-// showing the opening question as the title and the latest reply as a preview.
+
 function listConversations(userId, mode) {
   let rows = state.mentorSessions.filter((s) => s.user_id === userId);
   if (mode) rows = rows.filter((s) => s.mode === mode);
@@ -166,9 +185,6 @@ function listConversations(userId, mode) {
   return conversations.sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)).slice(0, 50);
 }
 
-// All turns of a single thread, in chronological order. Returns null if the
-// conversation doesn't exist or doesn't belong to this user (so the route
-// can 404 instead of leaking another user's thread).
 function getConversationTurns(userId, conversationId) {
   const rows = state.mentorSessions.filter(
     (s) => s.conversation_id === conversationId && s.user_id === userId
@@ -225,6 +241,77 @@ function reviewToDict(r) {
   };
 }
 
+// ---- roadmaps ----
+// Each roadmap has a title (e.g. "Software Engineer"), a goal string, and an
+// ordered array of steps. Each step has { label, subtopics (count), completed }.
+
+function createRoadmap(userId, { title, goal, steps }) {
+  const id = nextId("roadmaps");
+  const roadmap = {
+    id,
+    user_id: userId,
+    title: title || goal || "My Roadmap",
+    goal: goal || "",
+    steps: (steps || []).map((label, idx) => ({
+      idx,
+      label,
+      subtopics: Math.floor(Math.random() * 8) + 3, // decorative count
+      completed: false,
+    })),
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  };
+  state.roadmaps.push(roadmap);
+  save(state);
+  return roadmap;
+}
+
+function listRoadmaps(userId) {
+  return state.roadmaps
+    .filter((r) => r.user_id === userId)
+    .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1));
+}
+
+function getRoadmap(userId, roadmapId) {
+  return state.roadmaps.find((r) => r.id === roadmapId && r.user_id === userId) || null;
+}
+
+function updateRoadmapStep(userId, roadmapId, stepIdx, completed) {
+  const roadmap = getRoadmap(userId, roadmapId);
+  if (!roadmap) return null;
+  const step = roadmap.steps[stepIdx];
+  if (!step) return null;
+  step.completed = completed;
+  roadmap.updated_at = nowIso();
+  save(state);
+  return roadmap;
+}
+
+function deleteRoadmap(userId, roadmapId) {
+  const before = state.roadmaps.length;
+  state.roadmaps = state.roadmaps.filter(
+    (r) => !(r.id === roadmapId && r.user_id === userId)
+  );
+  const deleted = state.roadmaps.length < before;
+  if (deleted) save(state);
+  return deleted;
+}
+
+function roadmapToDict(r) {
+  const total = r.steps.length;
+  const done = r.steps.filter((s) => s.completed).length;
+  const overallPercent = total > 0 ? Math.round((done / total) * 100) : 0;
+  return {
+    id: r.id,
+    title: r.title,
+    goal: r.goal,
+    steps: r.steps,
+    overall_percent: overallPercent,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  };
+}
+
 // ---- dashboard aggregates ----
 
 function dashboardStats(userId) {
@@ -246,10 +333,6 @@ function dashboardStats(userId) {
 }
 
 // ---- progress page aggregates ----
-// Everything here is derived from data we already store (mentorSessions +
-// resumeReviews + the user's saved career_roadmap), so no new tables/fields
-// are needed. Values are simple, explainable proxies rather than exact
-// tracked metrics (we don't log actual time-on-task, for example).
 
 const TOPIC_KEYWORDS = [
   { label: "Data Structures", keywords: ["data structure", "array", "linked list", "stack", "queue", "tree", "graph", "hash"] },
@@ -267,9 +350,6 @@ const SKILL_KEYWORDS = [
   { label: "Backend", keywords: ["backend", "api", "server", "node", "express", "endpoint"] },
 ];
 
-// Counts how many of a user's sessions mention any keyword in each group.
-// Users with no matching history yet get a baseline value instead of a flat
-// zero, so a brand-new account doesn't render an empty-looking chart.
 function scoreAgainst(sessions, groups, baseline) {
   return groups.map((g, idx) => {
     const matches = sessions.filter((s) => {
@@ -289,7 +369,6 @@ function progressStats(userId) {
   const sessions = state.mentorSessions.filter((s) => s.user_id === userId);
   const reviews = state.resumeReviews.filter((r) => r.user_id === userId);
 
-  // --- day streak: consecutive days (walking back from today) with >=1 session
   const activeDays = new Set(sessions.map((s) => dayKey(s.created_at)));
   let streak = 0;
   const cursor = new Date();
@@ -298,8 +377,6 @@ function progressStats(userId) {
     cursor.setDate(cursor.getDate() - 1);
   }
 
-  // --- last 7 days of activity, used for the study-hours bar chart
-  // (proxy: ~18 minutes of study per session/turn)
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const studyHours = [];
   for (let i = 6; i >= 0; i--) {
@@ -311,17 +388,12 @@ function progressStats(userId) {
   }
   const hoursThisWeek = Math.round(studyHours.reduce((sum, d) => sum + d.hours, 0) * 10) / 10;
 
-  // --- XP / level: 10 XP per mentor turn, 20 XP per resume review
   const totalXp = sessions.length * 10 + reviews.length * 20;
   const level = Math.floor(totalXp / 100) + 1;
 
-  // --- topic + skill breakdowns, derived from keyword matches in past
-  // questions/summaries
   const topics = scoreAgainst(sessions, TOPIC_KEYWORDS, [20, 15, 10, 15, 25]);
   const skills = scoreAgainst(sessions, SKILL_KEYWORDS, [15, 10, 5, 20, 15]);
 
-  // --- roadmap: one step per line (or "->" segment) of the user's saved
-  // career_roadmap text, falling back to a generic default if none is set yet
   const user = findUserById(userId);
   const raw = (user && user.career_roadmap) || "";
   let stepLabels = raw
@@ -338,6 +410,23 @@ function progressStats(userId) {
     status: idx < doneCount ? "done" : idx === doneCount ? "current" : "todo",
   }));
 
+  // recent activity from conversations
+  const recentConversations = listConversations(userId, null).slice(0, 5).map((c) => ({
+    type: c.mode === "code" ? "code_review" : "chat",
+    title: c.title.length > 60 ? c.title.slice(0, 60) + "…" : c.title,
+    mode: c.mode,
+    created_at: c.created_at,
+  }));
+
+  // daily goals (derived from today's activity)
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todaySessions = sessions.filter((s) => dayKey(s.created_at) === todayKey).length;
+  const dailyGoals = [
+    { label: "Complete DSA problem", done: totalXp >= 10 },
+    { label: "Review JavaScript concepts", done: todaySessions >= 1 },
+    { label: "Practice coding problems", done: todaySessions >= 2 },
+  ];
+
   return {
     day_streak: streak,
     hours_this_week: hoursThisWeek,
@@ -347,6 +436,8 @@ function progressStats(userId) {
     skills,
     topics,
     roadmap: { overall_percent: overallPercent, steps },
+    recent_activity: recentConversations,
+    daily_goals: dailyGoals,
   };
 }
 
@@ -365,6 +456,12 @@ module.exports = {
   createResumeReview,
   listResumeReviews,
   reviewToDict,
+  createRoadmap,
+  listRoadmaps,
+  getRoadmap,
+  updateRoadmapStep,
+  deleteRoadmap,
+  roadmapToDict,
   dashboardStats,
   progressStats,
 };
