@@ -158,4 +158,11 @@ const api = {
       method: "POST",
       headers: { ...authHeaders() },
     }).then(handle),
+
+  // ---- AI-curated resources (based on the user's goal, not live web search) ----
+
+  getGoalResources: () =>
+    fetch(`${BASE_URL}/resources`, {
+      headers: { ...authHeaders() },
+    }).then(handle),
 };

@@ -19,6 +19,13 @@ const ROADMAP_SIGNAL_INSTRUCTION =
   'with a specific topic. Otherwise use "none" with an empty topic. Default to "none" — most ' +
   "single questions don't show enough evidence either way.";
 
+const ROLE_TITLE_INSTRUCTION =
+  ' Also include "role_title": the specific job/role title the student is aiming for, as a short ' +
+  '2-4 word noun phrase (e.g. "Data Scientist", "Backend Developer", "Product Manager"), inferred ' +
+  "from their stated goal/field and the conversation so far. Use an empty string if no clear role " +
+  "is identifiable yet. Never return a full sentence, a question, or a struggle/complaint as the " +
+  'role_title — it must be ONLY the role name itself.';
+
 const MODE_PROMPTS = {
   career:
     "You are a career mentor. The student will tell you their goal/field and a question. " +
@@ -28,7 +35,8 @@ const MODE_PROMPTS = {
     '"resources": ["resource or topic to look up", "..."]}. ' +
     "Keep steps concrete and actionable, 3-5 items. Keep resources as topic/resource names relevant " +
     "to the student's actual field, not fake links." +
-    ROADMAP_SIGNAL_INSTRUCTION,
+    ROADMAP_SIGNAL_INSTRUCTION +
+    ROLE_TITLE_INSTRUCTION,
 
   academic:
     "You are an academic mentor helping a student understand a concept or solve a doubt in " +
@@ -153,6 +161,7 @@ async function askMentor(mode, question, history = [], goal = "") {
   try {
     result = await callGroqMessages(messages);
   } catch (e) {
+    console.error("[askMentor] Groq call failed, falling back to placeholder response:", e.message);
     result = {
       summary: "The mentor is temporarily unavailable, here is a placeholder response.",
       steps: ["Check GROQ_API_KEY is set on the server", `Error: ${e.message}`],
@@ -167,6 +176,9 @@ async function askMentor(mode, question, history = [], goal = "") {
     signal && typeof signal === "object" && ["mastered", "struggling", "none"].includes(signal.status)
       ? { status: signal.status, topic: (signal.topic || "").trim() }
       : { status: "none", topic: "" };
+  // role_title only ever comes from career mode (see ROLE_TITLE_INSTRUCTION);
+  // other modes never asked for it, so it's always "" there.
+  result.role_title = typeof result.role_title === "string" ? result.role_title.trim() : "";
   return result;
 }
 
@@ -206,4 +218,47 @@ async function generateRoadmap(goal) {
   return steps.join(" -> ");
 }
 
-module.exports = { askMentor, analyzeResume, generateRoadmap, generateRoadmapSteps };
+const RESOURCES_SYSTEM_PROMPT =
+  "You are a mentor recommending learning resources for a student's stated goal/field. The goal " +
+  "may be technical, a competitive exam, higher education, or anything else — infer the field " +
+  "from the goal text and tailor every resource to it. Respond ONLY with a JSON object (no " +
+  'markdown, no code fences) in this exact shape: {"resources": [{"name": "resource or platform ' +
+  'name", "desc": "one short sentence on what it covers", "tag": "Free" or "Paid"}]}. ' +
+  "Give 6-8 real, well-known, currently-existing resources (courses, platforms, books, practice " +
+  "sites) genuinely relevant to the goal — never invent fake names or fake links.";
+
+// Domain-aware fallback resources, used only when the Groq call fails. Keeps
+// the Resources page from ever going blank even without a live API key.
+function fallbackResourcesFor(goal) {
+  const domain = detectDomain([goal || ""]);
+  const profile = DOMAIN_PROFILES[domain] || DOMAIN_PROFILES.tech;
+  return profile.topics.slice(0, 6).map((t) => ({
+    name: t.label,
+    desc: `Core topic to study for ${goal || "your goal"}.`,
+    tag: "Free",
+  }));
+}
+
+// Generates a personalized resource list from the student's goal. This is
+// LLM-curated, not a live web/search-API lookup — the UI should label it as
+// AI-curated rather than implying real-time web results, since a genuine
+// real-time version would need a separate search API integration.
+async function generateGoalResources(goal) {
+  if (!goal) return [];
+  let result;
+  try {
+    result = await callGroq(RESOURCES_SYSTEM_PROMPT, `Student's goal/field: ${goal}`);
+  } catch (e) {
+    result = { resources: fallbackResourcesFor(goal) };
+  }
+  const list = Array.isArray(result.resources) ? result.resources.filter((r) => r && r.name) : [];
+  return list.length > 0 ? list : fallbackResourcesFor(goal);
+}
+
+module.exports = {
+  askMentor,
+  analyzeResume,
+  generateRoadmap,
+  generateRoadmapSteps,
+  generateGoalResources,
+};

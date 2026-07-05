@@ -12,6 +12,7 @@ const resumeRoutes = require("./routes/resume");
 const dashboardRoutes = require("./routes/dashboard");
 const roadmapRoutes = require("./routes/roadmap");
 const suggestionsRoutes = require("./routes/suggestions");
+const resourcesRoutes = require("./routes/resources");
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/resume", resumeRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/roadmap", roadmapRoutes);
 app.use("/suggestions", suggestionsRoutes);
+app.use("/resources", resourcesRoutes);
 
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });

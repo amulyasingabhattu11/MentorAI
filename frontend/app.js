@@ -699,6 +699,9 @@ async function renderRoadmapPage(outlet) {
           const idx = roadmaps.findIndex(r => r.id === result.roadmap.id);
           if (idx !== -1) roadmaps[idx] = result.roadmap;
           paintRoadmapDetail(result.roadmap, roadmaps);
+          // Keep the cached profile (career_roadmap text) in sync too, so the
+          // Profile page reflects the approved change without a manual edit.
+          if (result.user) auth.updateUser(result.user);
           const remaining = await api.listSuggestions();
           paintSuggestions(remaining);
         } catch (err) {
@@ -1121,39 +1124,26 @@ async function renderHistoryPage(outlet) {
 
 // ---- Resources ----
 
-function renderResourcesPage(outlet) {
-  const resources = [
-    { icon: "📖", name: "DSA Fundamentals", desc: "Arrays, linked lists, trees, graphs and more", tag: "Free" },
-    { icon: "🎯", name: "LeetCode Practice", desc: "Coding challenges and interview prep", tag: "Free" },
-    { icon: "🎓", name: "System Design Primer", desc: "Architecture patterns and scalability", tag: "Free" },
-    { icon: "💡", name: "CS50 by Harvard", desc: "Intro to Computer Science fundamentals", tag: "Free" },
-    { icon: "🚀", name: "Frontend Masters", desc: "In-depth frontend & full-stack courses", tag: "Paid" },
-    { icon: "🧠", name: "ML Crash Course", desc: "Google's machine learning intro", tag: "Free" },
-    { icon: "🔧", name: "The Odin Project", desc: "Full-stack web development curriculum", tag: "Free" },
-    { icon: "📊", name: "Kaggle Learn", desc: "Data science & machine learning tracks", tag: "Free" },
-  ];
+// Icons cycle for whatever resources come back — the LLM doesn't pick these,
+// they're just visual variety since resource names vary per user/goal.
+const RESOURCE_ICONS = ["📖", "🎯", "🎓", "💡", "🚀", "🧠", "🔧", "📊"];
 
+async function renderResourcesPage(outlet) {
   outlet.innerHTML = `
     <div class="main">
       <h2 style="font-weight:700;margin-bottom:4px">Resources</h2>
-      <p style="color:var(--text-muted);font-size:14px;margin-top:0;margin-bottom:24px">Curated learning resources for CS students</p>
+      <p style="color:var(--text-muted);font-size:14px;margin-top:0;margin-bottom:4px" id="resources-subtitle">Loading personalized resources…</p>
+      <p style="color:var(--text-faint);font-size:12px;margin-top:0;margin-bottom:20px">
+        ✨ AI-curated based on your goal — not live web search results.
+      </p>
 
-      <div class="resources-grid">
-        ${resources.map(r => `
-          <div class="resource-card">
-            <div class="resource-icon">${r.icon}</div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-              <p class="resource-name" style="margin:0">${escapeHtml(r.name)}</p>
-              <span class="badge ${r.tag === "Free" ? "badge-green" : "badge-orange"}" style="font-size:10px">${r.tag}</span>
-            </div>
-            <p class="resource-desc">${escapeHtml(r.desc)}</p>
-          </div>
-        `).join("")}
+      <div id="resources-body">
+        <p style="color:var(--text-muted);font-size:14px">Loading…</p>
       </div>
 
-      <div class="card">
-        <p class="card-title">Ask for recommendations</p>
-        <p class="card-subtitle">Let your AI mentor suggest resources based on your current learning goals</p>
+      <div class="card" style="margin-top:20px">
+        <p class="card-title">Ask for more</p>
+        <p class="card-subtitle">Chat with your AI mentor for resources tailored to a specific question</p>
         <div style="display:flex;gap:8px">
           <a href="#/mentor"><button class="button-accent">Ask AI Mentor</button></a>
           <a href="#/roadmap"><button class="button-secondary">View Roadmap</button></a>
@@ -1161,6 +1151,36 @@ function renderResourcesPage(outlet) {
       </div>
     </div>
   `;
+
+  const subtitleEl = document.getElementById("resources-subtitle");
+  const bodyEl = document.getElementById("resources-body");
+
+  try {
+    const data = await api.getGoalResources();
+    const resources = data.resources || [];
+
+    subtitleEl.textContent = data.goal
+      ? `Curated for your goal: "${data.goal}"`
+      : "Set a goal (via AI Mentor or your Profile) to get resources tailored to you";
+
+    bodyEl.innerHTML = resources.length === 0
+      ? `<p style="color:var(--text-muted);font-size:14px">No resources yet — ask the AI Mentor a question to get started.</p>`
+      : `<div class="resources-grid">
+          ${resources.map((r, i) => `
+            <div class="resource-card">
+              <div class="resource-icon">${RESOURCE_ICONS[i % RESOURCE_ICONS.length]}</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <p class="resource-name" style="margin:0">${escapeHtml(r.name)}</p>
+                <span class="badge ${r.tag === "Paid" ? "badge-orange" : "badge-green"}" style="font-size:10px">${escapeHtml(r.tag || "Free")}</span>
+              </div>
+              <p class="resource-desc">${escapeHtml(r.desc || "")}</p>
+            </div>
+          `).join("")}
+        </div>`;
+  } catch (e) {
+    subtitleEl.textContent = "";
+    bodyEl.innerHTML = `<p class="error-text">${escapeHtml(e.message)}</p>`;
+  }
 }
 
 // ---- Achievements ----
@@ -1498,7 +1518,13 @@ async function renderMentorThread(outlet, conversationId) {
 }
 
 function renderCareerActions(turn, elementId) {
-  const goalText = (turn.question || "").trim() || turn.summary;
+  // Only the role/job title should ever become the goal (e.g. "Data Scientist"),
+  // never the raw question text — otherwise asking things like "I'm struggling
+  // with recursion" would set THAT sentence as the goal. role_title comes from
+  // the mentor LLM (see ROLE_TITLE_INSTRUCTION in backend/llm.js) and is empty
+  // when no clear role could be identified from the conversation yet.
+  const roleTitle = (turn.role_title || "").trim();
+  const goalText = roleTitle; // no raw-question fallback — see note above
   let goalSet = false;
   let settingGoal = false;
   let generatingRoadmap = false;
@@ -1518,9 +1544,11 @@ function renderCareerActions(turn, elementId) {
              <button id="generate-roadmap-btn" type="button" class="button-accent" ${generatingRoadmap ? "disabled" : ""}>
                ${generatingRoadmap ? "Generating roadmap…" : "Generate roadmap"}
              </button>`
-          : `<button id="set-goal-btn" type="button" class="button-secondary" ${settingGoal ? "disabled" : ""}>
-               ${settingGoal ? "Setting…" : "Set as goal"}
+          : goalText
+          ? `<button id="set-goal-btn" type="button" class="button-secondary" ${settingGoal ? "disabled" : ""}>
+               ${settingGoal ? "Setting…" : `Set "${escapeHtml(goalText)}" as goal`}
              </button>`
+          : `<p style="color:var(--text-faint);font-size:12px;margin:0">Keep chatting — once a clear role comes up, you'll be able to set it as your goal here.</p>`
         }
       </div>
     `;

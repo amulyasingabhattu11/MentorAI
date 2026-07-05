@@ -9,6 +9,7 @@ const {
   dismissSuggestion,
   suggestionToDict,
   roadmapToDict,
+  userToDict,
 } = require("../db");
 const { requireAuth } = require("../middleware/auth");
 
@@ -35,6 +36,7 @@ router.post("/:id/approve", requireAuth, (req, res) => {
   res.status(200).json({
     suggestion: suggestionToDict(result.suggestion),
     roadmap: roadmapToDict(result.roadmap),
+    user: result.user ? userToDict(result.user) : undefined,
   });
 });
 

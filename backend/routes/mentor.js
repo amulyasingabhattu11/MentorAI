@@ -50,16 +50,28 @@ function matchStepIndex(topic, steps) {
 // roadmap, no clear signal, or an identical suggestion is already pending
 // (so one topic re-discussed across turns doesn't spam notifications).
 function maybeQueueRoadmapSuggestion(userId, question, summary, signal) {
-  if (!signal || signal.status === "none" || !signal.topic) return;
+  // --- DEBUG LOGGING (kept intentionally, per earlier request) --------
+  console.log("[roadmap-signal] raw signal from LLM:", signal);
+
+  if (!signal || signal.status === "none" || !signal.topic) {
+    console.log("[roadmap-signal] skipped: no usable signal (status='none', missing, or empty topic).");
+    return;
+  }
 
   const roadmaps = listRoadmaps(userId);
-  if (roadmaps.length === 0) return;
+  if (roadmaps.length === 0) {
+    console.log("[roadmap-signal] skipped: user has no roadmap yet. Create one first on the Career Roadmap page.");
+    return;
+  }
   const roadmap = roadmaps[0]; // most recently updated (listRoadmaps is sorted)
 
   const alreadyPending = listPendingSuggestions(userId).some(
     (s) => s.roadmap_id === roadmap.id && s.payload && s.payload.topic === signal.topic
   );
-  if (alreadyPending) return;
+  if (alreadyPending) {
+    console.log(`[roadmap-signal] skipped: an identical pending suggestion for topic "${signal.topic}" already exists.`);
+    return;
+  }
 
   const stepIdx = matchStepIndex(signal.topic, roadmap.steps);
   const reasoningBase = `Based on your recent question ("${question.slice(0, 80)}${question.length > 80 ? "…" : ""}")`;
@@ -70,6 +82,7 @@ function maybeQueueRoadmapSuggestion(userId, question, summary, signal) {
       reasoning: `${reasoningBase}, it looks like you've got a solid handle on "${roadmap.steps[stepIdx].label}". Mark this roadmap step as done?`,
       payload: { stepIdx, topic: signal.topic },
     });
+    console.log(`[roadmap-signal] queued "mark_done" suggestion for step "${roadmap.steps[stepIdx].label}".`);
   } else if (signal.status === "struggling") {
     if (stepIdx !== -1) {
       createRoadmapSuggestion(userId, roadmap.id, {
@@ -77,6 +90,7 @@ function maybeQueueRoadmapSuggestion(userId, question, summary, signal) {
         reasoning: `${reasoningBase}, you seem to be finding "${roadmap.steps[stepIdx].label}" tricky. Move it up to be your next focus?`,
         payload: { stepIdx, topic: signal.topic },
       });
+      console.log(`[roadmap-signal] queued "reprioritize" suggestion for step "${roadmap.steps[stepIdx].label}".`);
     } else {
       const firstIncompleteIdx = roadmap.steps.findIndex((s) => !s.completed);
       const afterIdx = firstIncompleteIdx === -1 ? roadmap.steps.length - 1 : Math.max(firstIncompleteIdx - 1, -1);
@@ -85,7 +99,10 @@ function maybeQueueRoadmapSuggestion(userId, question, summary, signal) {
         reasoning: `${reasoningBase}, you seem to be finding "${signal.topic}" tricky. Add a dedicated roadmap step for it?`,
         payload: { afterIdx, label: `Review: ${signal.topic}`, topic: signal.topic },
       });
+      console.log(`[roadmap-signal] queued "add_step" suggestion for topic "${signal.topic}".`);
     }
+  } else {
+    console.log(`[roadmap-signal] signal status "${signal.status}" with matched stepIdx=${stepIdx} did not meet any condition to create a suggestion (e.g. step already completed).`);
   }
 }
 
@@ -136,6 +153,7 @@ router.post("/ask", requireAuth, async (req, res) => {
     steps: result.steps,
     resources: result.resources,
     conversationId: conversationId || undefined,
+    roleTitle: result.role_title,
   });
 
   if (mode !== "code") {

@@ -125,7 +125,7 @@ function userToDict(user) {
 
 // ---- mentor sessions ----
 
-function createMentorSession({ userId, mode, question, summary, steps, resources, conversationId }) {
+function createMentorSession({ userId, mode, question, summary, steps, resources, conversationId, roleTitle }) {
   const id = nextId("mentorSessions");
   const session = {
     id,
@@ -136,6 +136,7 @@ function createMentorSession({ userId, mode, question, summary, steps, resources
     summary: summary || "",
     steps: steps || [],
     resources: resources || [],
+    role_title: roleTitle || "",
     created_at: nowIso(),
   };
   state.mentorSessions.push(session);
@@ -205,6 +206,7 @@ function sessionToDict(s) {
     summary: s.summary,
     steps: s.steps,
     resources: s.resources,
+    role_title: s.role_title || "",
     created_at: s.created_at,
   };
 }
@@ -385,7 +387,10 @@ function getSuggestion(userId, suggestionId) {
 }
 
 // Applies the suggestion's mutation to its roadmap and marks it resolved.
-// Returns { suggestion, roadmap } or null if not found/already resolved.
+// Also keeps the user's profile career_roadmap text field in sync, since
+// the Profile page reads from there rather than re-deriving it from the
+// roadmap on every render.
+// Returns { suggestion, roadmap, user } or null if not found/already resolved.
 function approveSuggestion(userId, suggestionId) {
   const suggestion = getSuggestion(userId, suggestionId);
   if (!suggestion || suggestion.status !== "pending") return null;
@@ -402,8 +407,12 @@ function approveSuggestion(userId, suggestionId) {
 
   if (!roadmap) return null;
   suggestion.status = "approved";
+
+  const careerRoadmapText = roadmap.steps.map((s) => s.label).join(" -> ");
+  const user = updateUserProfile(userId, { careerRoadmap: careerRoadmapText });
+
   save(state);
-  return { suggestion, roadmap };
+  return { suggestion, roadmap, user };
 }
 
 function dismissSuggestion(userId, suggestionId) {

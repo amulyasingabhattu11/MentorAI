@@ -5,8 +5,8 @@
       "name": "ams",
       "email": "st@gmail.com",
       "password_hash": "$2a$10$GfAGJV4t0tHvzgfjVehiJuQmpIgvnsplCHxw4mEGyPrwtDqLUGCzW",
-      "goal": "I want to breakdown into dataengineering",
-      "career_roadmap": "Learn Python Basics -> Study Data Structures -> Understand SQL Concepts -> Explore NoSQL Databases -> Master Data Warehousing -> Learn ETL Tools -> Practice Big Data Engineering",
+      "goal": "Software Engineer",
+      "career_roadmap": "Learn Basic Programming -> Choose Specialization Area -> Develop Personal Projects -> Join Online Communities -> Pursue Internship Opportunities -> Build Professional Portfolio -> Prepare for Tech Interviews",
       "created_at": "2026-07-05T08:37:33.935Z"
     }
   ],
@@ -164,6 +164,165 @@
         "System Design Principles"
       ],
       "created_at": "2026-07-05T17:42:45.444Z"
+    },
+    {
+      "id": 12,
+      "conversation_id": 12,
+      "user_id": 1,
+      "mode": "career",
+      "question": "I am really confused about NoSQL databases and schemas, I don't get how they work at all.\"",
+      "summary": "To break into data engineering, understanding NoSQL databases and schemas is crucial, starting with the basics of schema design and data modeling in NoSQL databases. Begin by learning key concepts and exploring popular NoSQL databases like MongoDB and Cassandra.",
+      "steps": [
+        "Research the fundamentals of NoSQL databases, including key-value, document, column-family, and graph databases",
+        "Learn about schema design and data modeling in NoSQL databases, focusing on denormalization and data redundancy",
+        "Explore popular NoSQL databases such as MongoDB, Cassandra, and Redis, and practice designing and implementing schemas for sample datasets"
+      ],
+      "resources": [
+        "NoSQL database systems",
+        "Data modeling in NoSQL",
+        "MongoDB and Cassandra tutorials"
+      ],
+      "created_at": "2026-07-05T17:53:13.947Z"
+    },
+    {
+      "id": 13,
+      "conversation_id": 13,
+      "user_id": 1,
+      "mode": "career",
+      "question": "\"I just finished building my SQL database, I completely master SQL concepts and joins now.\"",
+      "summary": "With a strong foundation in SQL, the next steps for a data engineering career involve exploring data storage solutions and processing frameworks. Building on SQL skills, learning about data warehousing and big data processing is essential.",
+      "steps": [
+        "Explore data warehousing concepts and solutions like Amazon Redshift or Google BigQuery",
+        "Learn about big data processing frameworks such as Apache Spark or Hadoop",
+        "Investigate NoSQL databases and their applications in data engineering"
+      ],
+      "resources": [
+        "Data Warehousing",
+        "Big Data Processing",
+        "NoSQL Databases"
+      ],
+      "created_at": "2026-07-05T17:53:57.465Z"
+    },
+    {
+      "id": 15,
+      "conversation_id": 15,
+      "user_id": 1,
+      "mode": "academic",
+      "question": "I am really confused about NoSQL databases and schemas, I don't get how they work at all.",
+      "summary": "NoSQL databases differ from SQL databases in their schema flexibility and data modeling, allowing for more dynamic and scalable data storage. They often sacrifice some consistency and transactions for higher performance and ease of use.",
+      "steps": [
+        "Understand the basic types of NoSQL databases, including key-value stores, document databases, column-family stores, and graph databases",
+        "Learn about schema-less or dynamic schema design in NoSQL databases, where the structure of the data can change without altering the database schema",
+        "Explore data modeling techniques for NoSQL databases, such as denormalization and data embedding, to optimize data retrieval and storage",
+        "Familiarize yourself with popular NoSQL databases like MongoDB, Cassandra, and Redis, and their respective query languages and data models"
+      ],
+      "resources": [
+        "Data modeling for NoSQL databases",
+        "NoSQL database types and use cases",
+        "Comparison of NoSQL databases and SQL databases"
+      ],
+      "created_at": "2026-07-05T17:55:27.576Z"
+    },
+    {
+      "id": 19,
+      "conversation_id": 15,
+      "user_id": 1,
+      "mode": "academic",
+      "question": "what if i opt this as career?",
+      "summary": "A career in computer science or software development will inevitably involve recursion, as it is a fundamental concept in programming. Mastering recursion can lead to better problem-solving skills and more efficient code.",
+      "steps": [
+        "Start by understanding the basic principles of recursion, including base cases, recursive calls, and the call stack",
+        "Practice solving problems using recursion, such as tree traversals, dynamic programming, and combinatorial algorithms",
+        "Learn to identify when recursion is the best approach for a problem and when iteration might be more suitable",
+        "Study examples of recursive algorithms and data structures, such as recursive sorting, searching, and graph traversal"
+      ],
+      "resources": [
+        "Introduction to algorithms and data structures",
+        "Programming languages that heavily rely on recursion, such as Haskell or Lisp",
+        "Problem-solving platforms like LeetCode or HackerRank that feature recursive problems"
+      ],
+      "role_title": "",
+      "created_at": "2026-07-05T18:47:52.989Z"
+    },
+    {
+      "id": 20,
+      "conversation_id": 20,
+      "user_id": 1,
+      "mode": "career",
+      "question": "I want to become SDE intern in next 2 months.guide me through this",
+      "summary": "To become an SDE intern in 2 months, focus on recursion and other fundamental concepts in programming. Create a study plan and practice coding regularly.",
+      "steps": [
+        "Practice solving recursion problems on platforms like LeetCode or HackerRank",
+        "Review and understand the basics of data structures and algorithms",
+        "Work on building small projects to apply theoretical knowledge"
+      ],
+      "resources": [
+        "Data Structures and Algorithms",
+        "Recursion Theory",
+        "System Design"
+      ],
+      "role_title": "Software Engineer",
+      "created_at": "2026-07-05T18:48:41.933Z"
+    },
+    {
+      "id": 21,
+      "conversation_id": 21,
+      "user_id": 1,
+      "mode": "career",
+      "question": "suggest the courses to achieve my goal as SDE",
+      "summary": "To achieve the goal of becoming a Software Engineer, focus on building a strong foundation in programming fundamentals and expanding skills in specific areas",
+      "steps": [
+        "Learn programming languages such as Java, Python, or C++",
+        "Take online courses on data structures and algorithms",
+        "Explore specializations like cloud computing, artificial intelligence, or cybersecurity"
+      ],
+      "resources": [
+        "Data Structures and Algorithms",
+        "Object-Oriented Programming",
+        "Cloud Computing Platforms"
+      ],
+      "role_title": "Software Engineer",
+      "created_at": "2026-07-05T18:50:28.024Z"
+    },
+    {
+      "id": 22,
+      "conversation_id": 22,
+      "user_id": 1,
+      "mode": "career",
+      "question": "basics to learn Data science",
+      "summary": "To learn data science, start with foundational concepts and build upon them with practical experience. Key areas include statistics, programming, and data visualization.",
+      "steps": [
+        "Learn Python or R programming",
+        "Study statistics and probability",
+        "Explore data visualization tools like Tableau or Matplotlib"
+      ],
+      "resources": [
+        "Data Preprocessing",
+        "Machine Learning Algorithms",
+        "Data Visualization Techniques"
+      ],
+      "role_title": "Data Scientist",
+      "created_at": "2026-07-05T18:53:31.929Z"
+    },
+    {
+      "id": 23,
+      "conversation_id": 23,
+      "user_id": 1,
+      "mode": "career",
+      "question": "set goal as SDE",
+      "summary": "To become a successful Software Development Engineer, focus on building a strong foundation in programming and software development principles",
+      "steps": [
+        "Learn programming languages like Java, Python, or C++",
+        "Practice solving problems on platforms like LeetCode or HackerRank",
+        "Participate in coding challenges and projects to build a portfolio"
+      ],
+      "resources": [
+        "Data Structures and Algorithms",
+        "System Design",
+        "Object-Oriented Programming"
+      ],
+      "role_title": "Software Engineer",
+      "created_at": "2026-07-05T18:55:04.395Z"
     }
   ],
   "resumeReviews": [
@@ -209,10 +368,10 @@
   ],
   "nextId": {
     "users": 2,
-    "mentorSessions": 12,
+    "mentorSessions": 24,
     "resumeReviews": 3,
-    "roadmaps": 2,
-    "roadmapSuggestions": 1
+    "roadmaps": 6,
+    "roadmapSuggestions": 4
   },
   "roadmaps": [
     {
@@ -225,48 +384,206 @@
           "idx": 0,
           "label": "Learn programming basics",
           "subtopics": 9,
-          "completed": false
+          "completed": true
         },
         {
           "idx": 1,
+          "label": "Review: recursion",
+          "subtopics": 3,
+          "completed": false
+        },
+        {
+          "idx": 2,
+          "label": "Review: Recursion",
+          "subtopics": 5,
+          "completed": false
+        },
+        {
+          "idx": 3,
           "label": "Study data structures",
           "subtopics": 7,
           "completed": false
         },
         {
-          "idx": 2,
+          "idx": 4,
           "label": "Master machine learning",
           "subtopics": 4,
           "completed": false
         },
         {
-          "idx": 3,
+          "idx": 5,
           "label": "Explore data visualization",
           "subtopics": 4,
           "completed": false
         },
         {
-          "idx": 4,
+          "idx": 6,
           "label": "Practice with projects",
           "subtopics": 5,
           "completed": false
         },
         {
-          "idx": 5,
+          "idx": 7,
           "label": "Pursue data science certification",
           "subtopics": 3,
           "completed": false
         },
         {
-          "idx": 6,
+          "idx": 8,
           "label": "Join data science community",
           "subtopics": 4,
           "completed": false
         }
       ],
       "created_at": "2026-07-05T15:55:23.745Z",
-      "updated_at": "2026-07-05T17:18:02.670Z"
+      "updated_at": "2026-07-05T18:49:28.520Z"
+    },
+    {
+      "id": 4,
+      "user_id": 1,
+      "title": "Software Engineer",
+      "goal": "Software Engineer",
+      "steps": [
+        {
+          "idx": 0,
+          "label": "Learn Basic Programming",
+          "subtopics": 3,
+          "completed": false
+        },
+        {
+          "idx": 1,
+          "label": "Master Data Structures",
+          "subtopics": 7,
+          "completed": false
+        },
+        {
+          "idx": 2,
+          "label": "Familiarize with Algorithms",
+          "subtopics": 5,
+          "completed": false
+        },
+        {
+          "idx": 3,
+          "label": "Choose a Programming Language",
+          "subtopics": 4,
+          "completed": false
+        },
+        {
+          "idx": 4,
+          "label": "Develop Personal Projects",
+          "subtopics": 4,
+          "completed": false
+        },
+        {
+          "idx": 5,
+          "label": "Practice Coding Challenges",
+          "subtopics": 4,
+          "completed": false
+        },
+        {
+          "idx": 6,
+          "label": "Prepare for Technical Interviews",
+          "subtopics": 8,
+          "completed": false
+        }
+      ],
+      "created_at": "2026-07-05T18:48:47.832Z",
+      "updated_at": "2026-07-05T18:48:47.832Z"
+    },
+    {
+      "id": 5,
+      "user_id": 1,
+      "title": "Software Engineer",
+      "goal": "Software Engineer",
+      "steps": [
+        {
+          "idx": 0,
+          "label": "Learn Basic Programming",
+          "subtopics": 9,
+          "completed": false
+        },
+        {
+          "idx": 1,
+          "label": "Choose Specialization Area",
+          "subtopics": 6,
+          "completed": false
+        },
+        {
+          "idx": 2,
+          "label": "Develop Personal Projects",
+          "subtopics": 3,
+          "completed": false
+        },
+        {
+          "idx": 3,
+          "label": "Join Online Communities",
+          "subtopics": 9,
+          "completed": false
+        },
+        {
+          "idx": 4,
+          "label": "Pursue Internship Opportunities",
+          "subtopics": 5,
+          "completed": false
+        },
+        {
+          "idx": 5,
+          "label": "Build Professional Portfolio",
+          "subtopics": 10,
+          "completed": false
+        },
+        {
+          "idx": 6,
+          "label": "Prepare for Tech Interviews",
+          "subtopics": 6,
+          "completed": false
+        }
+      ],
+      "created_at": "2026-07-05T18:55:07.978Z",
+      "updated_at": "2026-07-05T18:55:07.978Z"
     }
   ],
-  "roadmapSuggestions": []
+  "roadmapSuggestions": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "roadmap_id": 3,
+      "type": "reprioritize",
+      "reasoning": "Based on your recent question (\"iam struggling with recusrion\"), you seem to be finding \"Practice Simple Recursion\" tricky. Move it up to be your next focus?",
+      "payload": {
+        "stepIdx": 2,
+        "topic": "Recursion"
+      },
+      "status": "approved",
+      "created_at": "2026-07-05T18:18:11.113Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "roadmap_id": 1,
+      "type": "add_step",
+      "reasoning": "Based on your recent question (\"what if i opt this as career?\"), you seem to be finding \"recursion\" tricky. Add a dedicated roadmap step for it?",
+      "payload": {
+        "afterIdx": 0,
+        "label": "Review: recursion",
+        "topic": "recursion"
+      },
+      "status": "approved",
+      "created_at": "2026-07-05T18:47:52.994Z"
+    },
+    {
+      "id": 3,
+      "user_id": 1,
+      "roadmap_id": 1,
+      "type": "add_step",
+      "reasoning": "Based on your recent question (\"I want to become SDE intern in next 2 months.guide me through this\"), you seem to be finding \"Recursion\" tricky. Add a dedicated roadmap step for it?",
+      "payload": {
+        "afterIdx": 0,
+        "label": "Review: Recursion",
+        "topic": "Recursion"
+      },
+      "status": "approved",
+      "created_at": "2026-07-05T18:48:41.936Z"
+    }
+  ]
 }
