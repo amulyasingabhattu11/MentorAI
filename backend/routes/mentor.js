@@ -154,6 +154,8 @@ router.post("/ask", requireAuth, async (req, res) => {
     resources: result.resources,
     conversationId: conversationId || undefined,
     roleTitle: result.role_title,
+    signalStatus: result.roadmap_signal && result.roadmap_signal.status,
+    signalTopic: result.roadmap_signal && result.roadmap_signal.topic,
   });
 
   if (mode !== "code") {

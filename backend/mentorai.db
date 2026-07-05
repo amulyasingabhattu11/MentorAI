@@ -454,7 +454,7 @@
           "idx": 1,
           "label": "Master Data Structures",
           "subtopics": 7,
-          "completed": false
+          "completed": true
         },
         {
           "idx": 2,
@@ -488,7 +488,7 @@
         }
       ],
       "created_at": "2026-07-05T18:48:47.832Z",
-      "updated_at": "2026-07-05T18:48:47.832Z"
+      "updated_at": "2026-07-05T19:18:14.597Z"
     },
     {
       "id": 5,
@@ -500,7 +500,7 @@
           "idx": 0,
           "label": "Learn Basic Programming",
           "subtopics": 9,
-          "completed": false
+          "completed": true
         },
         {
           "idx": 1,
@@ -540,7 +540,7 @@
         }
       ],
       "created_at": "2026-07-05T18:55:07.978Z",
-      "updated_at": "2026-07-05T18:55:07.978Z"
+      "updated_at": "2026-07-05T19:18:10.661Z"
     }
   ],
   "roadmapSuggestions": [

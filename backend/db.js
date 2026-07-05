@@ -125,7 +125,18 @@ function userToDict(user) {
 
 // ---- mentor sessions ----
 
-function createMentorSession({ userId, mode, question, summary, steps, resources, conversationId, roleTitle }) {
+function createMentorSession({
+  userId,
+  mode,
+  question,
+  summary,
+  steps,
+  resources,
+  conversationId,
+  roleTitle,
+  signalStatus,
+  signalTopic,
+}) {
   const id = nextId("mentorSessions");
   const session = {
     id,
@@ -137,6 +148,11 @@ function createMentorSession({ userId, mode, question, summary, steps, resources
     steps: steps || [],
     resources: resources || [],
     role_title: roleTitle || "",
+    // Mentor's own judgment of this session, from the LLM's roadmap_signal
+    // ("mastered" | "struggling" | "none") — used by scoreAgainst() to build
+    // real Topic Progress / Skills numbers instead of keyword counting.
+    signal_status: signalStatus || "none",
+    signal_topic: signalTopic || "",
     created_at: nowIso(),
   };
   state.mentorSessions.push(session);
@@ -545,14 +561,47 @@ function detectDomain(textsArray) {
   return "tech";
 }
 
-function scoreAgainst(sessions, groups, baseline) {
-  return groups.map((g, idx) => {
-    const matches = sessions.filter((s) => {
-      const text = `${s.question} ${s.summary}`.toLowerCase();
-      return g.keywords.some((k) => text.includes(k));
-    }).length;
-    const value = matches === 0 ? baseline[idx] : Math.min(100, 25 + matches * 15);
-    return { label: g.label, value };
+// Does a piece of free text (a session's roadmap_signal topic, or a roadmap
+// step label like "Master Data Structures") belong to this topic/skill group
+// (e.g. "Data Structures")? Substring-or-shared-keyword fuzzy match.
+function textMatchesGroup(text, group) {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  const label = group.label.toLowerCase();
+  if (t.includes(label) || label.includes(t)) return true;
+  return group.keywords.some((k) => t.includes(k) || k.includes(t));
+}
+
+// Scores each topic/skill group using ONLY real, intentional outcomes —
+// never a bare keyword mention. Simply typing "array" or "sql" in a random
+// question (even in Code Review, which isn't tied to any learning path at
+// all) must NOT move the needle; that was the bug being fixed here.
+//  - a COMPLETED roadmap step matching this topic -> strong credit (you
+//    explicitly ticked it done yourself — the most trustworthy signal there
+//    is, and now it's actually usable across the whole track)
+//  - "mastered" mentor signal on a matching topic  -> strong credit (the
+//    mentor judged you actually demonstrated understanding)
+//  - "struggling" mentor signal on a matching topic -> small credit (genuine
+//    engagement/difficulty with it, but no mastery yet)
+//  - everything else (including plain keyword hits) -> no credit
+// A topic with no real evidence stays at 0%, full stop.
+function scoreAgainst(sessions, groups, completedStepLabels) {
+  const completed = completedStepLabels || [];
+  return groups.map((g) => {
+    let score = 0;
+    if (completed.some((label) => textMatchesGroup(label, g))) {
+      score += 60;
+    }
+    for (const s of sessions) {
+      const signalHit = textMatchesGroup(s.signal_topic, g);
+      if (!signalHit) continue;
+      if (s.signal_status === "mastered") {
+        score += 30;
+      } else if (s.signal_status === "struggling") {
+        score += 10;
+      }
+    }
+    return { label: g.label, value: Math.min(100, score) };
   });
 }
 
@@ -644,9 +693,14 @@ function progressStats(userId) {
     ? detectDomain([roadmapText])
     : detectDomain([goal, recentSessionText]);
   const profile = DOMAIN_PROFILES[domain];
-  const baseline = [20, 15, 10, 15, 25];
-  const topics = scoreAgainst(sessions, profile.topics, baseline);
-  const skills = scoreAgainst(sessions, profile.skills, baseline.slice(0, 5));
+  // Completed roadmap steps are the single most trustworthy signal a user
+  // gives — an explicit, deliberate "I finished this" click — so they count
+  // toward Topic Progress / Skills too, not just mentor-session signals.
+  const completedStepLabels = latest
+    ? latest.steps.filter((s) => s.completed).map((s) => s.label)
+    : [];
+  const topics = scoreAgainst(sessions, profile.topics, completedStepLabels);
+  const skills = scoreAgainst(sessions, profile.skills, completedStepLabels);
 
   // ---- recent activity ----
   const recentConversations = listConversations(userId, null).slice(0, 5).map((c) => ({
