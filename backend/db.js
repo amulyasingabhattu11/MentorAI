@@ -468,32 +468,17 @@ function progressStats(userId) {
   const totalXp = sessions.length * 10 + reviews.length * 20;
   const level = Math.floor(totalXp / 100) + 1;
 
-  // ---- domain detection — scan goal AND recent session questions only.
-  // career_roadmap is free-form user text (e.g. "crack groups like UPSC") that
-  // can mention any domain keyword without the user actually studying it, so we
-  // deliberately exclude it from domain detection to avoid false positives.
-  const recentSessionText = sessions
-    .slice(-10)
-    .map((s) => `${s.question} ${s.summary}`)
-    .join(" ");
-  const domain = detectDomain([goal, recentSessionText]);
-  const profile = DOMAIN_PROFILES[domain];
-  const baseline = [20, 15, 10, 15, 25];
-  const topics = scoreAgainst(sessions, profile.topics, baseline);
-  const skills = scoreAgainst(sessions, profile.skills, baseline.slice(0, 5));
-
   // ---- current roadmap ----
   // Always prefer structured roadmaps (created via Career Roadmap page).
   // When none exist, return empty steps — the frontend shows a "create one" prompt.
-  // We never use the old career_roadmap text field for step labels because it
-  // contains whatever the user typed (including legacy goals like "Groups UPSC")
-  // and cannot be reliably parsed into meaningful steps.
   const userRoadmaps = listRoadmaps(userId);
   let overallPercent, steps;
+  let latest = null;
 
   if (userRoadmaps.length > 0) {
-    // Pick the roadmap updated most recently
-    const latest = userRoadmaps
+    // Pick the roadmap updated most recently — this is the single source of
+    // truth for "what is the user currently working towards".
+    latest = userRoadmaps
       .slice()
       .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))[0];
     const dict = roadmapToDict(latest);
@@ -514,6 +499,31 @@ function progressStats(userId) {
     overallPercent = 0;
     steps = [];
   }
+
+  // ---- domain detection ----
+  // The ACTIVE ROADMAP is the single source of truth for "what is the user
+  // studying right now" — it's the thing they explicitly created/edited on
+  // the Career Roadmap page. We detect the domain from the roadmap's goal +
+  // title + step labels first. Only when no roadmap exists do we fall back
+  // to the user's onboarding `goal` text, and finally to recent session
+  // questions. This fixes the bug where switching roadmaps (e.g. from a UPSC
+  // goal to "Learn programming basics") left the Progress page permanently
+  // stuck showing the old domain, because it used to read only the stale
+  // `user.goal` field which never changed after signup.
+  const roadmapText = latest
+    ? [latest.goal, latest.title, ...latest.steps.map((s) => s.label)].join(" ")
+    : "";
+  const recentSessionText = sessions
+    .slice(-10)
+    .map((s) => `${s.question} ${s.summary}`)
+    .join(" ");
+  const domain = latest
+    ? detectDomain([roadmapText])
+    : detectDomain([goal, recentSessionText]);
+  const profile = DOMAIN_PROFILES[domain];
+  const baseline = [20, 15, 10, 15, 25];
+  const topics = scoreAgainst(sessions, profile.topics, baseline);
+  const skills = scoreAgainst(sessions, profile.skills, baseline.slice(0, 5));
 
   // ---- recent activity ----
   const recentConversations = listConversations(userId, null).slice(0, 5).map((c) => ({
@@ -588,4 +598,6 @@ module.exports = {
   roadmapToDict,
   dashboardStats,
   progressStats,
+  DOMAIN_PROFILES,
+  detectDomain,
 };

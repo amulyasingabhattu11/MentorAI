@@ -8,6 +8,7 @@ const {
   updateRoadmapStep,
   deleteRoadmap,
   roadmapToDict,
+  updateUserProfile,
 } = require("../db");
 const { generateRoadmapSteps } = require("../llm");
 const { requireAuth } = require("../middleware/auth");
@@ -36,6 +37,11 @@ router.post("/create", requireAuth, async (req, res) => {
     goal,
     steps,
   });
+
+  // Keep the user's profile goal in sync with their most recently created
+  // roadmap. This is what the Progress page's domain detection reads as a
+  // fallback, and keeping it fresh avoids it ever going stale again.
+  updateUserProfile(req.userId, { goal });
 
   res.status(201).json(roadmapToDict(roadmap));
 });

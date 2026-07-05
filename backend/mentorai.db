@@ -86,6 +86,44 @@
         "Professional Networking"
       ],
       "created_at": "2026-07-05T09:51:01.438Z"
+    },
+    {
+      "id": 8,
+      "conversation_id": 8,
+      "user_id": 1,
+      "mode": "career",
+      "question": "ML",
+      "summary": "To get started with Machine Learning, focus on building a strong foundation in programming and mathematics, then explore ML frameworks and tools. Begin by learning key concepts and practicing with real-world projects.",
+      "steps": [
+        "Learn linear algebra, calculus, and probability",
+        "Choose a programming language like Python and learn its ML libraries",
+        "Practice with datasets and projects on platforms like Kaggle"
+      ],
+      "resources": [
+        "Neural Networks",
+        "Deep Learning",
+        "Natural Language Processing"
+      ],
+      "created_at": "2026-07-05T16:52:47.132Z"
+    },
+    {
+      "id": 9,
+      "conversation_id": 9,
+      "user_id": 1,
+      "mode": "career",
+      "question": "ML",
+      "summary": "To get started with Machine Learning, focus on building a strong foundation in programming and mathematics, then explore ML frameworks and libraries. Start with basic concepts and gradually move to advanced topics like deep learning and natural language processing.",
+      "steps": [
+        "Learn Python programming and its ecosystem",
+        "Study linear algebra, calculus, and probability theory",
+        "Explore scikit-learn and TensorFlow libraries"
+      ],
+      "resources": [
+        "Linear Algebra",
+        "Deep Learning",
+        "Natural Language Processing"
+      ],
+      "created_at": "2026-07-05T16:52:56.919Z"
     }
   ],
   "resumeReviews": [
@@ -131,7 +169,7 @@
   ],
   "nextId": {
     "users": 2,
-    "mentorSessions": 8,
+    "mentorSessions": 10,
     "resumeReviews": 3,
     "roadmaps": 2
   },
