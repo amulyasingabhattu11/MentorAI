@@ -3,7 +3,8 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { findUserByEmail, createUser, userToDict } = require("../db");
+const { findUserByEmail, findUserById, createUser, updateUserProfile, userToDict } = require("../db");
+const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -46,6 +47,26 @@ router.post("/login", (req, res) => {
 
   const token = signToken(user.id);
   res.status(200).json({ token, user: userToDict(user) });
+});
+
+router.get("/me", requireAuth, (req, res) => {
+  const user = findUserById(req.userId);
+  if (!user) {
+    return res.status(404).json({ error: "user not found" });
+  }
+  res.status(200).json({ user: userToDict(user) });
+});
+
+router.patch("/profile", requireAuth, (req, res) => {
+  const body = req.body || {};
+  const goal = typeof body.goal === "string" ? body.goal.trim() : undefined;
+  const careerRoadmap = typeof body.career_roadmap === "string" ? body.career_roadmap.trim() : undefined;
+
+  const user = updateUserProfile(req.userId, { goal, careerRoadmap });
+  if (!user) {
+    return res.status(404).json({ error: "user not found" });
+  }
+  res.status(200).json({ user: userToDict(user) });
 });
 
 module.exports = router;

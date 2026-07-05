@@ -12,7 +12,7 @@ function escapeHtml(str) {
 
 // ---- routing ----
 
-const ROUTES = ["/", "/mentor", "/history", "/resume", "/login"];
+const ROUTES = ["/", "/mentor", "/history", "/resume", "/profile", "/login"];
 
 function currentPath() {
   const hash = window.location.hash.replace(/^#/, "");
@@ -51,6 +51,19 @@ function render() {
 // ---- shell + sidebar (mirrors App.jsx's ProtectedShell + components/Sidebar.jsx) ----
 
 function renderProtectedShell(path) {
+  const user = auth.getUser();
+
+  function initials(name) {
+    return (
+      (name || "?")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() || "")
+        .join("") || "?"
+    );
+  }
+
   root.innerHTML = `
     <div class="app-shell">
       <div class="sidebar">
@@ -60,7 +73,11 @@ function renderProtectedShell(path) {
         ${navLink("/history", "History", path)}
         ${navLink("/resume", "Resume review", path)}
         <div style="margin-top:auto; padding-top:16px;">
-          <button id="logout-btn" class="button-secondary" style="width:100%">Log out</button>
+          <a href="#/profile" class="sidebar-profile ${path === "/profile" ? "active" : ""}">
+            <div class="profile-avatar">${escapeHtml(initials(user.name))}</div>
+            <span class="sidebar-profile-name">${escapeHtml(user.name)}</span>
+          </a>
+          <button id="logout-btn" class="button-secondary" style="width:100%; margin-top:10px">Log out</button>
         </div>
       </div>
       <div id="main-outlet"></div>
@@ -77,6 +94,7 @@ function renderProtectedShell(path) {
   else if (path === "/mentor") renderMentorPage(outlet);
   else if (path === "/history") renderHistoryPage(outlet);
   else if (path === "/resume") renderResumePage(outlet);
+  else if (path === "/profile") renderProfilePage(outlet);
 }
 
 function navLink(path, label, currentPathValue) {
@@ -331,8 +349,98 @@ function renderMentorPage(outlet) {
                </ul>`
             : ""
         }
+
+        ${result.mode === "career" ? `<div id="career-actions"></div>` : ""}
       </div>
     `;
+
+    if (result.mode === "career") {
+      renderCareerActions(result);
+    }
+  }
+
+  // ---- career mentor -> "Set as goal" -> "Generate roadmap" -> saved to profile ----
+
+  function renderCareerActions(result) {
+    const goalText = (result.question || "").trim() || result.summary;
+
+    let goalSet = false;
+    let settingGoal = false;
+    let generatingRoadmap = false;
+    let roadmapSaved = false;
+    let actionError = "";
+
+    function paintActions() {
+      const el = document.getElementById("career-actions");
+      if (!el) return;
+
+      el.innerHTML = `
+        <div class="career-actions">
+          ${actionError ? `<p class="error-text" style="margin:0 0 8px">${escapeHtml(actionError)}</p>` : ""}
+
+          ${
+            roadmapSaved
+              ? `<p class="success-text">Roadmap generated and saved to your <a href="#/profile">profile</a>.</p>`
+              : goalSet
+              ? `
+                <p class="success-text" style="margin:0 0 10px">Goal set ✓ — "${escapeHtml(goalText)}"</p>
+                <button id="generate-roadmap-btn" type="button" ${generatingRoadmap ? "disabled" : ""}>
+                  ${generatingRoadmap ? "Generating roadmap…" : "Generate roadmap"}
+                </button>
+              `
+              : `
+                <button id="set-goal-btn" type="button" class="button-secondary" ${settingGoal ? "disabled" : ""}>
+                  ${settingGoal ? "Setting…" : "Set as goal"}
+                </button>
+              `
+          }
+        </div>
+      `;
+
+      const setGoalBtn = document.getElementById("set-goal-btn");
+      if (setGoalBtn) setGoalBtn.addEventListener("click", handleSetGoal);
+
+      const generateBtn = document.getElementById("generate-roadmap-btn");
+      if (generateBtn) generateBtn.addEventListener("click", handleGenerateRoadmap);
+    }
+
+    async function handleSetGoal() {
+      settingGoal = true;
+      actionError = "";
+      paintActions();
+
+      try {
+        const currentUser = auth.getUser();
+        const data = await api.updateProfile(goalText, currentUser.career_roadmap || "");
+        auth.updateUser(data.user);
+        goalSet = true;
+      } catch (e) {
+        actionError = e.message;
+      } finally {
+        settingGoal = false;
+        paintActions();
+      }
+    }
+
+    async function handleGenerateRoadmap() {
+      generatingRoadmap = true;
+      actionError = "";
+      paintActions();
+
+      try {
+        const roadmapData = await api.generateRoadmap(goalText);
+        const data = await api.updateProfile(goalText, roadmapData.roadmap);
+        auth.updateUser(data.user);
+        roadmapSaved = true;
+      } catch (e) {
+        actionError = e.message;
+      } finally {
+        generatingRoadmap = false;
+        paintActions();
+      }
+    }
+
+    paintActions();
   }
 
   paint();
@@ -473,4 +581,125 @@ function renderResumePage(outlet) {
       </div>
     `;
   }
+}
+
+// ---- pages/Profile.jsx ----
+// Full profile view/edit lives in the main content area. The sidebar only shows
+// the avatar + name (see renderProtectedShell), which link here.
+
+function renderProfilePage(outlet) {
+  let user = auth.getUser();
+  let editing = false;
+  let saving = false;
+  let error = "";
+
+  function initials(name) {
+    return (
+      (name || "?")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() || "")
+        .join("") || "?"
+    );
+  }
+
+  function fieldView(label, value, placeholder) {
+    return `
+      <div class="profile-field">
+        <p class="profile-label">${escapeHtml(label)}</p>
+        ${
+          value
+            ? `<p class="profile-value">${escapeHtml(value)}</p>`
+            : `<p class="profile-value empty">${escapeHtml(placeholder)}</p>`
+        }
+      </div>
+    `;
+  }
+
+  function paint() {
+    outlet.innerHTML = `
+      <div class="main">
+        <h2 style="font-weight:500">Profile</h2>
+
+        <div class="card profile-page-card">
+          <div class="profile-avatar profile-avatar-lg">${escapeHtml(initials(user.name))}</div>
+
+          ${
+            !editing
+              ? `
+            <p class="profile-name-lg">${escapeHtml(user.name)}</p>
+            <p class="profile-email-lg">${escapeHtml(user.email)}</p>
+
+            ${fieldView("Goal", user.goal, "No goal set yet")}
+            ${fieldView("Career roadmap", user.career_roadmap, "No roadmap set yet")}
+
+            <button id="profile-edit-btn" class="button-secondary" type="button">Edit profile</button>
+          `
+              : `
+            <p class="profile-name-lg">${escapeHtml(user.name)}</p>
+            <p class="profile-email-lg">${escapeHtml(user.email)}</p>
+
+            <div class="field">
+              <label>Goal</label>
+              <input id="profile-goal-input" value="${escapeHtml(user.goal)}" placeholder="e.g. Land an SDE internship" />
+            </div>
+
+            <div class="field">
+              <label>Career roadmap</label>
+              <textarea id="profile-roadmap-input" rows="4" placeholder="e.g. DSA -> projects -> resume -> interviews">${escapeHtml(user.career_roadmap)}</textarea>
+            </div>
+
+            <p class="error-text" id="profile-error" style="display:${error ? "block" : "none"}">${escapeHtml(error)}</p>
+
+            <div style="display:flex; gap:8px">
+              <button id="profile-save-btn" type="button" ${saving ? "disabled" : ""}>${saving ? "Saving…" : "Save"}</button>
+              <button id="profile-cancel-btn" type="button" class="button-secondary" ${saving ? "disabled" : ""}>Cancel</button>
+            </div>
+          `
+          }
+        </div>
+      </div>
+    `;
+
+    const editBtn = document.getElementById("profile-edit-btn");
+    if (editBtn) editBtn.addEventListener("click", () => {
+      editing = true;
+      error = "";
+      paint();
+    });
+
+    const cancelBtn = document.getElementById("profile-cancel-btn");
+    if (cancelBtn) cancelBtn.addEventListener("click", () => {
+      editing = false;
+      error = "";
+      paint();
+    });
+
+    const saveBtn = document.getElementById("profile-save-btn");
+    if (saveBtn) saveBtn.addEventListener("click", handleSave);
+  }
+
+  async function handleSave() {
+    const goal = document.getElementById("profile-goal-input").value.trim();
+    const roadmap = document.getElementById("profile-roadmap-input").value.trim();
+
+    saving = true;
+    error = "";
+    paint();
+
+    try {
+      const data = await api.updateProfile(goal, roadmap);
+      user = data.user;
+      auth.updateUser(user);
+      editing = false;
+    } catch (e) {
+      error = e.message;
+    } finally {
+      saving = false;
+      paint();
+    }
+  }
+
+  paint();
 }

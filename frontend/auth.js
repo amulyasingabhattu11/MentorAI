@@ -13,6 +13,12 @@ const auth = {
     localStorage.setItem("mentorai_user", JSON.stringify(user));
   },
 
+  // used after a profile edit, when we already have a token and just need
+  // to refresh the cached user object (name/email/goal/career_roadmap)
+  updateUser(user) {
+    localStorage.setItem("mentorai_user", JSON.stringify(user));
+  },
+
   logout() {
     localStorage.removeItem("mentorai_token");
     localStorage.removeItem("mentorai_user");

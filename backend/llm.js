@@ -38,6 +38,13 @@ const RESUME_SYSTEM_PROMPT =
   "Base the score on clarity, quantified impact, relevant skills coverage, and formatting cues " +
   "you can infer from plain text. Give 4-6 suggestions.";
 
+const ROADMAP_SYSTEM_PROMPT =
+  "You are a career mentor creating a step-by-step career roadmap for a CS student. " +
+  "Given the student's goal, respond ONLY with a JSON object (no markdown, no code fences) " +
+  'in this exact shape: {"roadmap": ["stage 1", "stage 2", "stage 3", "stage 4"]}. ' +
+  "Keep each stage short (3-6 words), ordered chronologically from where a beginner would " +
+  "start through to achieving the goal, 4-6 stages total.";
+
 async function callGroq(systemPrompt, userContent) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -108,4 +115,15 @@ async function analyzeResume(resumeText, targetRole) {
   return result;
 }
 
-module.exports = { askMentor, analyzeResume };
+async function generateRoadmap(goal) {
+  let result;
+  try {
+    result = await callGroq(ROADMAP_SYSTEM_PROMPT, goal);
+  } catch (e) {
+    result = { roadmap: [`Roadmap unavailable: ${e.message}`] };
+  }
+  const stages = Array.isArray(result.roadmap) ? result.roadmap.filter(Boolean) : [];
+  return stages.join(" -> ");
+}
+
+module.exports = { askMentor, analyzeResume, generateRoadmap };

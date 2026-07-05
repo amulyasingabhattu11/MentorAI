@@ -127,6 +127,23 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .error-text { color: #a32d2d; font-size: 13px; margin-top: 8px; }
 
+.success-text {
+  color: #1a7f37;
+  font-size: 13px;
+  margin: 0;
+}
+
+.career-actions {
+  border-top: 1px solid #ece9df;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.career-actions a {
+  color: #185fa5;
+  font-weight: 500;
+}
+
 .step-row {
   display: flex;
   gap: 8px;
@@ -176,4 +193,102 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   background: #e6f1fb;
   color: #185fa5;
   margin-bottom: 4px;
+}
+
+/* ---- sidebar profile snippet (just avatar + name, links to /profile) ---- */
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.sidebar-profile:hover,
+.sidebar-profile.active {
+  background: #e6f1fb;
+}
+
+.sidebar-profile .profile-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.sidebar-profile-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- avatar (shared by sidebar snippet + profile page) ---- */
+
+.profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #185fa5;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.profile-avatar-lg {
+  width: 56px;
+  height: 56px;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+/* ---- full profile page (main content area) ---- */
+
+.profile-page-card {
+  max-width: 480px;
+}
+
+.profile-name-lg {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.profile-email-lg {
+  color: #6b6a63;
+  font-size: 14px;
+  margin: 2px 0 20px;
+}
+
+.profile-field {
+  margin-bottom: 16px;
+}
+
+.profile-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9a988e;
+  margin: 0 0 4px;
+}
+
+.profile-value {
+  font-size: 14px;
+  color: #3a392f;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.profile-value.empty {
+  color: #9a988e;
+  font-style: italic;
 }

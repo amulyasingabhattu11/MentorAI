@@ -69,4 +69,23 @@ const api = {
     fetch(`${BASE_URL}/resume/history`, {
       headers: { ...authHeaders() },
     }).then(handle),
+
+  me: () =>
+    fetch(`${BASE_URL}/auth/me`, {
+      headers: { ...authHeaders() },
+    }).then(handle),
+
+  updateProfile: (goal, careerRoadmap) =>
+    fetch(`${BASE_URL}/auth/profile`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ goal, career_roadmap: careerRoadmap }),
+    }).then(handle),
+
+  generateRoadmap: (goal) =>
+    fetch(`${BASE_URL}/mentor/roadmap`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ goal }),
+    }).then(handle),
 };

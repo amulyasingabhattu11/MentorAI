@@ -2,7 +2,7 @@
 
 const express = require("express");
 const { createMentorSession, listMentorSessions, sessionToDict } = require("../db");
-const { askMentor } = require("../llm");
+const { askMentor, generateRoadmap } = require("../llm");
 const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
@@ -40,6 +40,18 @@ router.get("/history", requireAuth, (req, res) => {
   const mode = req.query.mode;
   const rows = listMentorSessions(userId, mode);
   res.status(200).json(rows.map(sessionToDict));
+});
+
+router.post("/roadmap", requireAuth, async (req, res) => {
+  const body = req.body || {};
+  const goal = (body.goal || "").trim();
+
+  if (!goal) {
+    return res.status(400).json({ error: "goal is required" });
+  }
+
+  const roadmap = await generateRoadmap(goal);
+  res.status(200).json({ roadmap });
 });
 
 module.exports = router;

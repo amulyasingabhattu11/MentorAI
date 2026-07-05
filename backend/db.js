@@ -53,6 +53,8 @@ function createUser({ name, email, passwordHash }) {
     name,
     email,
     password_hash: passwordHash,
+    goal: "",
+    career_roadmap: "",
     created_at: nowIso(),
   };
   state.users.push(user);
@@ -60,8 +62,23 @@ function createUser({ name, email, passwordHash }) {
   return user;
 }
 
+function updateUserProfile(userId, { goal, careerRoadmap }) {
+  const user = findUserById(userId);
+  if (!user) return null;
+  if (goal !== undefined) user.goal = goal;
+  if (careerRoadmap !== undefined) user.career_roadmap = careerRoadmap;
+  save(state);
+  return user;
+}
+
 function userToDict(user) {
-  return { id: user.id, name: user.name, email: user.email };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    goal: user.goal || "",
+    career_roadmap: user.career_roadmap || "",
+  };
 }
 
 // ---- mentor sessions ----
@@ -159,6 +176,7 @@ module.exports = {
   findUserByEmail,
   findUserById,
   createUser,
+  updateUserProfile,
   userToDict,
   createMentorSession,
   listMentorSessions,

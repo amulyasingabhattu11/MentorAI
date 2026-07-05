@@ -1,0 +1,57 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "ams",
+      "email": "st@gmail.com",
+      "password_hash": "$2a$10$GfAGJV4t0tHvzgfjVehiJuQmpIgvnsplCHxw4mEGyPrwtDqLUGCzW",
+      "goal": "I want to become ML Research intern",
+      "career_roadmap": "",
+      "created_at": "2026-07-05T08:37:33.935Z"
+    }
+  ],
+  "mentorSessions": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "mode": "career",
+      "question": "I wnat to become ML Research intern",
+      "summary": "To become an ML research intern, focus on building a strong foundation in machine learning and gaining practical experience through projects and research papers. This will help you develop the skills and knowledge required for a research internship in machine learning.",
+      "steps": [
+        "Take online courses in machine learning and deep learning to build a strong foundation",
+        "Read and implement research papers in machine learning to gain practical experience",
+        "Participate in machine learning competitions to develop problem-solving skills"
+      ],
+      "resources": [
+        "Deep Learning",
+        "Machine Learning with Python",
+        "Natural Language Processing"
+      ],
+      "created_at": "2026-07-05T08:44:48.090Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "mode": "career",
+      "question": "I want to become ML Research intern",
+      "summary": "To become an ML Research intern, focus on building a strong foundation in machine learning and gaining practical experience through projects and internships. This will help you develop the skills and knowledge required for a research internship in machine learning.",
+      "steps": [
+        "Take online courses in machine learning and deep learning to build a strong theoretical foundation",
+        "Work on personal projects that apply machine learning to real-world problems",
+        "Participate in machine learning competitions to practice and learn from others"
+      ],
+      "resources": [
+        "Deep Learning",
+        "Machine Learning with Python",
+        "Natural Language Processing"
+      ],
+      "created_at": "2026-07-05T08:57:58.620Z"
+    }
+  ],
+  "resumeReviews": [],
+  "nextId": {
+    "users": 2,
+    "mentorSessions": 3,
+    "resumeReviews": 1
+  }
+}
