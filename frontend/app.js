@@ -527,6 +527,7 @@ async function renderRoadmapPage(outlet) {
           </button>
         </div>
         <p class="error-text" id="roadmap-error" style="display:none"></p>
+        <div id="roadmap-suggestions"></div>
         <div id="roadmap-body">
           <p style="color:var(--text-muted);font-size:14px">Loading…</p>
         </div>
@@ -632,6 +633,92 @@ async function renderRoadmapPage(outlet) {
     const errEl = document.getElementById("roadmap-error");
     if (errEl) { errEl.textContent = e.message; errEl.style.display = "block"; }
     document.getElementById("roadmap-body").innerHTML = "";
+  }
+
+  // Load pending Mentor-driven roadmap suggestions (notifications). These
+  // never change anything by themselves — only Approve does.
+  try {
+    const suggestions = await api.listSuggestions();
+    paintSuggestions(suggestions);
+  } catch {
+    // Suggestions are a nice-to-have; a failure here shouldn't block the roadmap itself.
+  }
+
+  function suggestionCopy(type) {
+    if (type === "mark_done") return { icon: "✅", label: "Mark step complete" };
+    if (type === "reprioritize") return { icon: "⏫", label: "Prioritize this step" };
+    return { icon: "➕", label: "Add roadmap step" };
+  }
+
+  function paintSuggestions(suggestions) {
+    const el = document.getElementById("roadmap-suggestions");
+    if (!el) return;
+
+    if (!suggestions || suggestions.length === 0) {
+      el.innerHTML = "";
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:20px;border-left:3px solid var(--accent)">
+        <p class="card-title" style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          🔔 Mentor suggestions
+        </p>
+        <p class="card-subtitle" style="margin-top:0;margin-bottom:12px">Based on your recent conversations — nothing changes until you approve.</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${suggestions.map(s => {
+            const copy = suggestionCopy(s.type);
+            return `
+              <div class="suggestion-card" data-suggestion-id="${s.id}"
+                   style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+                <p style="margin:0;font-size:13px;flex:1;min-width:200px">${escapeHtml(s.reasoning)}</p>
+                <div style="display:flex;gap:8px;flex-shrink:0">
+                  <button class="button-accent suggestion-approve-btn" style="padding:6px 12px;font-size:12px;white-space:nowrap">
+                    ${copy.icon} ${copy.label}
+                  </button>
+                  <button class="button-secondary suggestion-dismiss-btn" style="padding:6px 12px;font-size:12px">
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+
+    el.querySelectorAll(".suggestion-card").forEach(card => {
+      const id = Number(card.dataset.suggestionId);
+
+      card.querySelector(".suggestion-approve-btn").addEventListener("click", async (e) => {
+        e.target.disabled = true;
+        e.target.textContent = "Applying…";
+        try {
+          const result = await api.approveSuggestion(id);
+          // Refresh the roadmap this suggestion touched so the change is visible immediately.
+          const idx = roadmaps.findIndex(r => r.id === result.roadmap.id);
+          if (idx !== -1) roadmaps[idx] = result.roadmap;
+          paintRoadmapDetail(result.roadmap, roadmaps);
+          const remaining = await api.listSuggestions();
+          paintSuggestions(remaining);
+        } catch (err) {
+          const errEl = document.getElementById("roadmap-error");
+          if (errEl) { errEl.textContent = err.message; errEl.style.display = "block"; }
+        }
+      });
+
+      card.querySelector(".suggestion-dismiss-btn").addEventListener("click", async (e) => {
+        e.target.disabled = true;
+        try {
+          await api.dismissSuggestion(id);
+          const remaining = await api.listSuggestions();
+          paintSuggestions(remaining);
+        } catch (err) {
+          const errEl = document.getElementById("roadmap-error");
+          if (errEl) { errEl.textContent = err.message; errEl.style.display = "block"; }
+        }
+      });
+    });
   }
 
   document.getElementById("new-roadmap-btn").addEventListener("click", () => showCreateRoadmapModal(roadmaps));
@@ -1425,7 +1512,7 @@ function renderCareerActions(turn, elementId) {
       <div class="career-actions">
         ${actionError ? `<p class="error-text" style="margin:0 0 8px">${escapeHtml(actionError)}</p>` : ""}
         ${roadmapSaved
-          ? `<p class="success-text">Roadmap generated and saved to your <a href="#/profile">profile</a>.</p>`
+          ? `<p class="success-text">Roadmap generated — view it on your <a href="#/roadmap">Career Roadmap</a> page.</p>`
           : goalSet
           ? `<p class="success-text" style="margin:0 0 10px">Goal set ✓ — "${escapeHtml(goalText)}"</p>
              <button id="generate-roadmap-btn" type="button" class="button-accent" ${generatingRoadmap ? "disabled" : ""}>
@@ -1455,9 +1542,17 @@ function renderCareerActions(turn, elementId) {
   async function handleGenerateRoadmap() {
     generatingRoadmap = true; actionError = ""; paintActions();
     try {
-      const roadmapData = await api.generateRoadmap(goalText);
-      const data = await api.updateProfile(goalText, roadmapData.roadmap);
-      auth.updateUser(data.user);
+      // Creates a REAL structured roadmap (steps you can check off, tracked
+      // on the Career Roadmap page) via /roadmap/create — the same endpoint
+      // the Career Roadmap page itself uses. Both paths now lead to one
+      // consistent roadmap system, and the backend keeps the profile's
+      // goal/career_roadmap text fields in sync automatically.
+      const roadmap = await api.createRoadmap(goalText, goalText);
+      auth.updateUser({
+        ...auth.getUser(),
+        goal: goalText,
+        career_roadmap: roadmap.steps.map((s) => s.label).join(" -> "),
+      });
       roadmapSaved = true;
     } catch (e) { actionError = e.message; }
     finally { generatingRoadmap = false; paintActions(); }
@@ -1720,6 +1815,72 @@ function renderProfilePage(outlet) {
     return (name || "?").trim().split(/\s+/).slice(0, 2).map(p => p[0]?.toUpperCase() || "").join("") || "?";
   }
 
+  // Splits the plain "Step 1 -> Step 2 -> Step 3" text into an array of
+  // trimmed step labels. Accepts both "->" and the unicode arrow "→".
+  function parseRoadmapSteps(text) {
+    return (text || "")
+      .split(/->|→/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  // Renders the career roadmap as a winding "road" with a numbered stop at
+  // each milestone, instead of a flat text string.
+  function renderRoadmapRoad(steps) {
+    if (steps.length === 0) return "";
+
+    const stepW = 170;
+    const width = Math.max(640, stepW * steps.length + 80);
+    const height = 220;
+    const midY = height / 2;
+    const amp = 60;
+    const startX = 70;
+
+    const points = steps.map((label, i) => ({
+      x: startX + i * stepW,
+      y: i % 2 === 0 ? midY - amp : midY + amp,
+      label,
+    }));
+
+    // Build a smooth wavy road through all points using cubic beziers.
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const midX = (prev.x + curr.x) / 2;
+      path += ` C ${midX} ${prev.y}, ${midX} ${curr.y}, ${curr.x} ${curr.y}`;
+    }
+
+    const markers = points
+      .map((p, i) => {
+        const labelY = p.y === midY - amp ? p.y - 44 : p.y + 60;
+        return `
+          <g class="road-marker">
+            <circle cx="${p.x}" cy="${p.y}" r="22" style="fill:var(--accent);stroke:var(--card-bg);stroke-width:4" />
+            <text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" style="fill:var(--button-text,#fff);font-size:15px;font-weight:700">${i + 1}</text>
+            <foreignObject x="${p.x - 70}" y="${labelY}" width="140" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" title="${escapeHtml(p.label)}"
+                   style="font-size:12px;line-height:1.3;text-align:center;color:var(--text);font-family:inherit;
+                          overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+                ${escapeHtml(p.label)}
+              </div>
+            </foreignObject>
+          </g>
+        `;
+      })
+      .join("");
+
+    return `
+      <div style="overflow-x:auto;overflow-y:hidden;margin:8px 0 4px;-webkit-overflow-scrolling:touch">
+        <svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="display:block;min-width:${width}px">
+          <path d="${path}" fill="none" style="stroke:var(--border);stroke-width:14;stroke-linecap:round" />
+          <path d="${path}" fill="none" style="stroke:var(--accent);stroke-width:3;stroke-dasharray:2 10;stroke-linecap:round;opacity:0.6" />
+          ${markers}
+        </svg>
+      </div>
+    `;
+  }
+
   function fieldView(label, value, placeholder) {
     return `
       <div class="profile-field">
@@ -1742,7 +1903,13 @@ function renderProfilePage(outlet) {
             <p class="profile-name-lg">${escapeHtml(user.name)}</p>
             <p class="profile-email-lg">${escapeHtml(user.email)}</p>
             ${fieldView("Goal", user.goal, "No goal set yet")}
-            ${fieldView("Career roadmap", user.career_roadmap, "No roadmap set yet")}
+            <div class="profile-field">
+              <p class="profile-label">Career roadmap</p>
+              ${user.career_roadmap
+                ? renderRoadmapRoad(parseRoadmapSteps(user.career_roadmap))
+                : `<p class="profile-value empty">No roadmap set yet</p>`
+              }
+            </div>
             <button id="profile-edit-btn" class="button-secondary" type="button">Edit profile</button>
           ` : `
             <p class="profile-name-lg">${escapeHtml(user.name)}</p>

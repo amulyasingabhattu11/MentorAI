@@ -5,8 +5,8 @@
       "name": "ams",
       "email": "st@gmail.com",
       "password_hash": "$2a$10$GfAGJV4t0tHvzgfjVehiJuQmpIgvnsplCHxw4mEGyPrwtDqLUGCzW",
-      "goal": "I want to crack internship in top SDE",
-      "career_roadmap": "Preliminary exam preparation -> Mains exam focused study -> Interview skills development -> Mock tests and practice -> Revision and consistency -> Final assessment and attempt",
+      "goal": "I want to breakdown into dataengineering",
+      "career_roadmap": "Learn Python Basics -> Study Data Structures -> Understand SQL Concepts -> Explore NoSQL Databases -> Master Data Warehousing -> Learn ETL Tools -> Practice Big Data Engineering",
       "created_at": "2026-07-05T08:37:33.935Z"
     }
   ],
@@ -124,6 +124,46 @@
         "Natural Language Processing"
       ],
       "created_at": "2026-07-05T16:52:56.919Z"
+    },
+    {
+      "id": 10,
+      "conversation_id": 10,
+      "user_id": 1,
+      "mode": "career",
+      "question": "I want to breakdown into dataengineering",
+      "summary": "To transition into data engineering from SDE, focus on acquiring skills in big data processing, data storage, and data analytics. This involves learning technologies like Hadoop, Spark, and NoSQL databases, and understanding data engineering principles.",
+      "steps": [
+        "Learn the fundamentals of data engineering, including data pipelines, data warehousing, and ETL processes",
+        "Familiarize yourself with big data technologies such as Hadoop, Spark, and Flink, and practice using them",
+        "Study data storage solutions like HBase, Cassandra, and MongoDB, and learn to design scalable data architectures"
+      ],
+      "resources": [
+        "Apache Hadoop",
+        "Apache Spark",
+        "Data Engineering with Python",
+        "NoSQL databases",
+        "Data Warehousing and ETL"
+      ],
+      "created_at": "2026-07-05T17:17:08.807Z"
+    },
+    {
+      "id": 11,
+      "conversation_id": 11,
+      "user_id": 1,
+      "mode": "career",
+      "question": "i want to become SDE intern",
+      "summary": "To become a Software Development Engineer (SDE) intern, focus on building a strong foundation in programming and data engineering, and prepare for common interview questions. Tailor your resume and online profiles to highlight relevant skills and experience.",
+      "steps": [
+        "Learn programming languages such as Java, Python, or C++",
+        "Familiarize yourself with data engineering concepts and tools like Apache Beam, Apache Spark, or AWS Glue",
+        "Practice solving problems on platforms like LeetCode, HackerRank, or DataCamp to improve your coding skills"
+      ],
+      "resources": [
+        "Data Engineering Fundamentals",
+        "Cloud Computing Platforms",
+        "System Design Principles"
+      ],
+      "created_at": "2026-07-05T17:42:45.444Z"
     }
   ],
   "resumeReviews": [
@@ -169,9 +209,10 @@
   ],
   "nextId": {
     "users": 2,
-    "mentorSessions": 10,
+    "mentorSessions": 12,
     "resumeReviews": 3,
-    "roadmaps": 2
+    "roadmaps": 2,
+    "roadmapSuggestions": 1
   },
   "roadmaps": [
     {
@@ -224,7 +265,8 @@
         }
       ],
       "created_at": "2026-07-05T15:55:23.745Z",
-      "updated_at": "2026-07-05T15:55:32.235Z"
+      "updated_at": "2026-07-05T17:18:02.670Z"
     }
-  ]
+  ],
+  "roadmapSuggestions": []
 }

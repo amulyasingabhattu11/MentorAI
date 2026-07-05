@@ -16,7 +16,8 @@ function load() {
     mentorSessions: [],
     resumeReviews: [],
     roadmaps: [],
-    nextId: { users: 1, mentorSessions: 1, resumeReviews: 1, roadmaps: 1 },
+    roadmapSuggestions: [],
+    nextId: { users: 1, mentorSessions: 1, resumeReviews: 1, roadmaps: 1, roadmapSuggestions: 1 },
   });
 
   if (!fs.existsSync(DATA_FILE)) {
@@ -38,14 +39,16 @@ function load() {
   if (!Array.isArray(parsed.mentorSessions)) parsed.mentorSessions = [];
   if (!Array.isArray(parsed.resumeReviews)) parsed.resumeReviews = [];
   if (!Array.isArray(parsed.roadmaps)) parsed.roadmaps = [];
+  if (!Array.isArray(parsed.roadmapSuggestions)) parsed.roadmapSuggestions = [];
 
   if (!parsed.nextId || typeof parsed.nextId !== "object") {
-    parsed.nextId = { users: 1, mentorSessions: 1, resumeReviews: 1, roadmaps: 1 };
+    parsed.nextId = { users: 1, mentorSessions: 1, resumeReviews: 1, roadmaps: 1, roadmapSuggestions: 1 };
   } else {
     if (!parsed.nextId.users) parsed.nextId.users = 1;
     if (!parsed.nextId.mentorSessions) parsed.nextId.mentorSessions = 1;
     if (!parsed.nextId.resumeReviews) parsed.nextId.resumeReviews = 1;
     if (!parsed.nextId.roadmaps) parsed.nextId.roadmaps = 1;
+    if (!parsed.nextId.roadmapSuggestions) parsed.nextId.roadmapSuggestions = 1;
   }
 
   return parsed;
@@ -287,6 +290,40 @@ function updateRoadmapStep(userId, roadmapId, stepIdx, completed) {
   return roadmap;
 }
 
+// Inserts a new step right after `afterIdx` (used when a roadmap suggestion
+// to add a remedial step is approved). Re-indexes all steps afterward.
+function insertRoadmapStep(userId, roadmapId, afterIdx, label) {
+  const roadmap = getRoadmap(userId, roadmapId);
+  if (!roadmap) return null;
+  const insertAt = Math.min(Math.max(afterIdx + 1, 0), roadmap.steps.length);
+  roadmap.steps.splice(insertAt, 0, {
+    idx: insertAt,
+    label,
+    subtopics: Math.floor(Math.random() * 8) + 3,
+    completed: false,
+  });
+  roadmap.steps.forEach((s, i) => { s.idx = i; });
+  roadmap.updated_at = nowIso();
+  save(state);
+  return roadmap;
+}
+
+// Moves a step to be the very next incomplete step (used when a roadmap
+// suggestion recommends prioritizing something the user is struggling with).
+function reprioritizeRoadmapStep(userId, roadmapId, stepIdx) {
+  const roadmap = getRoadmap(userId, roadmapId);
+  if (!roadmap) return null;
+  const [step] = roadmap.steps.splice(stepIdx, 1);
+  if (!step) return null;
+  const firstIncompleteIdx = roadmap.steps.findIndex((s) => !s.completed);
+  const insertAt = firstIncompleteIdx === -1 ? 0 : firstIncompleteIdx;
+  roadmap.steps.splice(insertAt, 0, step);
+  roadmap.steps.forEach((s, i) => { s.idx = i; });
+  roadmap.updated_at = nowIso();
+  save(state);
+  return roadmap;
+}
+
 function deleteRoadmap(userId, roadmapId) {
   const before = state.roadmaps.length;
   state.roadmaps = state.roadmaps.filter(
@@ -309,6 +346,83 @@ function roadmapToDict(r) {
     overall_percent: overallPercent,
     created_at: r.created_at,
     updated_at: r.updated_at,
+  };
+}
+
+// ---- roadmap suggestions (Mentor insight -> notification -> approve/dismiss) ----
+// A suggestion is never applied automatically. It just sits here as a pending
+// notification until the user explicitly approves or dismisses it.
+//
+// type: "mark_done"    payload: { stepIdx }
+//       "add_step"     payload: { afterIdx, label }
+//       "reprioritize" payload: { stepIdx }
+
+function createRoadmapSuggestion(userId, roadmapId, { type, reasoning, payload }) {
+  const id = nextId("roadmapSuggestions");
+  const suggestion = {
+    id,
+    user_id: userId,
+    roadmap_id: roadmapId,
+    type,
+    reasoning: reasoning || "",
+    payload: payload || {},
+    status: "pending", // pending | approved | dismissed
+    created_at: nowIso(),
+  };
+  state.roadmapSuggestions.push(suggestion);
+  save(state);
+  return suggestion;
+}
+
+function listPendingSuggestions(userId) {
+  return state.roadmapSuggestions
+    .filter((s) => s.user_id === userId && s.status === "pending")
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+}
+
+function getSuggestion(userId, suggestionId) {
+  return state.roadmapSuggestions.find((s) => s.id === suggestionId && s.user_id === userId) || null;
+}
+
+// Applies the suggestion's mutation to its roadmap and marks it resolved.
+// Returns { suggestion, roadmap } or null if not found/already resolved.
+function approveSuggestion(userId, suggestionId) {
+  const suggestion = getSuggestion(userId, suggestionId);
+  if (!suggestion || suggestion.status !== "pending") return null;
+
+  let roadmap = null;
+  const { type, payload } = suggestion;
+  if (type === "mark_done") {
+    roadmap = updateRoadmapStep(userId, suggestion.roadmap_id, payload.stepIdx, true);
+  } else if (type === "add_step") {
+    roadmap = insertRoadmapStep(userId, suggestion.roadmap_id, payload.afterIdx, payload.label);
+  } else if (type === "reprioritize") {
+    roadmap = reprioritizeRoadmapStep(userId, suggestion.roadmap_id, payload.stepIdx);
+  }
+
+  if (!roadmap) return null;
+  suggestion.status = "approved";
+  save(state);
+  return { suggestion, roadmap };
+}
+
+function dismissSuggestion(userId, suggestionId) {
+  const suggestion = getSuggestion(userId, suggestionId);
+  if (!suggestion || suggestion.status !== "pending") return null;
+  suggestion.status = "dismissed";
+  save(state);
+  return suggestion;
+}
+
+function suggestionToDict(s) {
+  return {
+    id: s.id,
+    roadmap_id: s.roadmap_id,
+    type: s.type,
+    reasoning: s.reasoning,
+    payload: s.payload,
+    status: s.status,
+    created_at: s.created_at,
   };
 }
 
@@ -594,8 +708,16 @@ module.exports = {
   listRoadmaps,
   getRoadmap,
   updateRoadmapStep,
+  insertRoadmapStep,
+  reprioritizeRoadmapStep,
   deleteRoadmap,
   roadmapToDict,
+  createRoadmapSuggestion,
+  listPendingSuggestions,
+  getSuggestion,
+  approveSuggestion,
+  dismissSuggestion,
+  suggestionToDict,
   dashboardStats,
   progressStats,
   DOMAIN_PROFILES,

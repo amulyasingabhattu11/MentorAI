@@ -139,4 +139,23 @@ const api = {
       method: "DELETE",
       headers: { ...authHeaders() },
     }).then(handle),
+
+  // ---- Roadmap suggestions (Mentor insight notifications) ----
+
+  listSuggestions: () =>
+    fetch(`${BASE_URL}/suggestions`, {
+      headers: { ...authHeaders() },
+    }).then(handle),
+
+  approveSuggestion: (id) =>
+    fetch(`${BASE_URL}/suggestions/${id}/approve`, {
+      method: "POST",
+      headers: { ...authHeaders() },
+    }).then(handle),
+
+  dismissSuggestion: (id) =>
+    fetch(`${BASE_URL}/suggestions/${id}/dismiss`, {
+      method: "POST",
+      headers: { ...authHeaders() },
+    }).then(handle),
 };
