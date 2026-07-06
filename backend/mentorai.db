@@ -8,6 +8,15 @@
       "goal": "Software Engineer",
       "career_roadmap": "Learn Basic Programming -> Choose Specialization Area -> Develop Personal Projects -> Join Online Communities -> Pursue Internship Opportunities -> Build Professional Portfolio -> Prepare for Tech Interviews",
       "created_at": "2026-07-05T08:37:33.935Z"
+    },
+    {
+      "id": 2,
+      "name": "Amulya",
+      "email": "amulyasingabhattu11@gmail.com",
+      "password_hash": "$2a$10$Zea9/Guq6K9f8h9fwbpUAuEyW3qKR6uG2pj.rziLWEfhSuafgUfGS",
+      "goal": "",
+      "career_roadmap": "",
+      "created_at": "2026-07-06T03:51:57.488Z"
     }
   ],
   "mentorSessions": [
@@ -367,7 +376,7 @@
     }
   ],
   "nextId": {
-    "users": 2,
+    "users": 3,
     "mentorSessions": 24,
     "resumeReviews": 3,
     "roadmaps": 6,
