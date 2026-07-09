@@ -1878,7 +1878,10 @@ function renderProfilePage(outlet) {
 
     const stepW = 170;
     const width = Math.max(640, stepW * steps.length + 80);
-    const height = 220;
+    // Height must fit both the "above" labels (odd steps) and the "below"
+    // labels (even steps). 220 was too short for the below-labels, which
+    // pushed them past the bottom of the viewBox and made them invisible.
+    const height = 300;
     const midY = height / 2;
     const amp = 60;
     const startX = 70;
@@ -1900,7 +1903,11 @@ function renderProfilePage(outlet) {
 
     const markers = points
       .map((p, i) => {
-        const labelY = p.y === midY - amp ? p.y - 44 : p.y + 60;
+        // Below-labels used a +60 offset which, combined with the old
+        // height of 220, put them past the bottom edge of the SVG (clipped
+        // and invisible). +40 keeps the label (40px tall) fully inside the
+        // now-taller viewBox with room to spare.
+        const labelY = p.y === midY - amp ? p.y - 44 : p.y + 40;
         return `
           <g class="road-marker">
             <circle cx="${p.x}" cy="${p.y}" r="22" style="fill:var(--accent);stroke:var(--card-bg);stroke-width:4" />
